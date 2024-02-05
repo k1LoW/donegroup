@@ -10,15 +10,15 @@ import (
 var doneGroupKey = struct{}{}
 
 type doneGroup struct {
-	errgroups []*errgroup.Group
+	cleanupGroups []*errgroup.Group
 }
 
-// WithCancel returns a copy of parent with doneGroup.
+// WithCancel returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancel(ctx context.Context) (context.Context, context.CancelFunc) {
 	return WithCancelWithKey(ctx, doneGroupKey)
 }
 
-// WithCancelWithKey returns a copy of parent with doneGroup.
+// WithCancelWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.CancelFunc) {
 	secondCtx, secondCancel := context.WithCancel(ctx)
 	dg, ok := ctx.Value(key).(*doneGroup)
@@ -26,8 +26,8 @@ func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.C
 		dg = &doneGroup{}
 	}
 	eg := new(errgroup.Group)
-	dg.errgroups = append(dg.errgroups, eg)
-	secondDg := &doneGroup{errgroups: []*errgroup.Group{eg}}
+	dg.cleanupGroups = append(dg.cleanupGroups, eg)
+	secondDg := &doneGroup{cleanupGroups: []*errgroup.Group{eg}}
 	return context.WithValue(secondCtx, key, secondDg), secondCancel
 }
 
@@ -42,7 +42,7 @@ func ClenupWithKey(ctx context.Context, key any, f func() error) error {
 	if !ok {
 		return errors.New("donegroup: context does not contain a donegroup. Use donegroup.WithCancel to create a context with a donegroup")
 	}
-	first := dg.errgroups[0]
+	first := dg.cleanupGroups[0]
 	first.Go(func() error {
 		<-ctx.Done()
 		return f()
@@ -63,7 +63,7 @@ func WaitWithKey(ctx context.Context, key any) error {
 		return errors.New("donegroup: context does not contain a donegroup. Use donegroup.WithCancel to create a context with a donegroup")
 	}
 	eg := new(errgroup.Group)
-	for _, g := range dg.errgroups {
+	for _, g := range dg.cleanupGroups {
 		eg.Go(g.Wait)
 	}
 	return eg.Wait()

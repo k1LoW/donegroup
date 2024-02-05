@@ -1,8 +1,12 @@
 # donegroup
 
-`donegroup` is a package that provides a graceful cleanup transaction to context.Context when the context is canceled.
+`donegroup` is a package that provides a graceful cleanup transaction to context.Context when the context is canceled ( **done** ).
+
+> errgroup.Group after <-ctx.Done() = donegroup
 
 ## Usage
+
+Use donegroup.WithCancel instead of [context.WithCancel](https://pkg.go.dev/context#WithCancel).
 
 ```go
 package main
@@ -43,3 +47,5 @@ func main() {
 	// cleanup
 }
 ```
+
+dongroup.Cleanup is similar in usage to [testing.(*T) Cleanup](https://pkg.go.dev/testing#T.Cleanup), but the order of execution is not guaranteed.
