@@ -3,6 +3,7 @@ package donegroup
 import (
 	"context"
 	"errors"
+	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -13,6 +14,7 @@ var doneGroupKey = struct{}{}
 type doneGroup struct {
 	ctx           context.Context
 	cleanupGroups []*errgroup.Group
+	mu            sync.Mutex
 }
 
 // WithCancel returns a copy of parent with a new Done channel and a doneGroup.
@@ -81,7 +83,9 @@ func WaitWithKeyAndTimeout(ctx context.Context, key any, timeout time.Duration) 
 		ctxx, cancel = context.WithTimeout(ctxx, timeout)
 		defer cancel()
 	}
+	dg.mu.Lock()
 	dg.ctx = ctxx
+	dg.mu.Unlock()
 	eg, _ := errgroup.WithContext(ctxx)
 	for _, g := range dg.cleanupGroups {
 		eg.Go(g.Wait)
@@ -91,5 +95,8 @@ func WaitWithKeyAndTimeout(ctx context.Context, key any, timeout time.Duration) 
 }
 
 func (dg *doneGroup) goWithCtx(f func(ctx context.Context) error) error {
-	return f(dg.ctx)
+	dg.mu.Lock()
+	ctx := dg.ctx
+	dg.mu.Unlock()
+	return f(ctx)
 }
