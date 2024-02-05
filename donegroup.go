@@ -61,16 +61,16 @@ func Wait(ctx context.Context) error {
 
 // Wait blocks until the context (ctx) is canceled. Then calls the function registered in Cleanup with context (ctxx).
 func WaitWithContext(ctx, ctxx context.Context) error {
-	return WaitWithKeyAndContext(ctx, doneGroupKey, ctxx)
+	return WaitWithContextAndKey(ctx, ctxx, doneGroupKey)
 }
 
 // WaitWithKey blocks until the context is canceled.
 func WaitWithKey(ctx context.Context, key any) error {
-	return WaitWithKeyAndContext(ctx, key, context.Background())
+	return WaitWithContextAndKey(ctx, context.Background(), key)
 }
 
 // WaitWithKeyAndContext blocks until the context is canceled. Then calls the function registered in Cleanup with context (ctxx).
-func WaitWithKeyAndContext(ctx context.Context, key any, ctxx context.Context) error {
+func WaitWithContextAndKey(ctx, ctxx context.Context, key any) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
