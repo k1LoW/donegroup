@@ -6,7 +6,7 @@
 
 ## Usage
 
-Use donegroup.WithCancel instead of [context.WithCancel](https://pkg.go.dev/context#WithCancel).
+Use [donegroup.WithCancel](https://pkg.go.dev/github.com/k1LoW/donegroup#WithCancel) instead of [context.WithCancel](https://pkg.go.dev/context#WithCancel).
 
 ```go
 package main
@@ -25,7 +25,16 @@ func main() {
 
 	if err := donegroup.Clenup(ctx, func(_ context.Context) error {
 		// Cleanup process of some kind
-		fmt.Println("cleanup")
+		fmt.Println("cleanup 1")
+		return nil
+	}); err != nil {
+		log.Fatal(err)
+	}
+
+	if err := donegroup.Clenup(ctx, func(_ context.Context) error {
+		// Cleanup process of some kind
+		time.Sleep(1 * time.Second)
+		fmt.Println("cleanup 2")
 		return nil
 	}); err != nil {
 		log.Fatal(err)
@@ -44,8 +53,9 @@ func main() {
 
 	// Output:
 	// finish
-	// cleanup
+	// cleanup 1
+	// cleanup 2
 }
 ```
 
-dongroup.Cleanup is similar in usage to [testing.(*T) Cleanup](https://pkg.go.dev/testing#T.Cleanup), but the order of execution is not guaranteed.
+[dongroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) is similar in usage to [testing.(*T) Cleanup](https://pkg.go.dev/testing#T.Cleanup), but the order of execution is not guaranteed.
