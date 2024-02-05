@@ -26,7 +26,7 @@ func main() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
 	// Cleanup process 1 of some kind
-	if err := donegroup.Clenup(ctx, func(_ context.Context) error {
+	if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
 		fmt.Println("cleanup 1")
 		return nil
 	}); err != nil {
@@ -34,7 +34,7 @@ func main() {
 	}
 
 	// Cleanup process 2 of some kind
-	if err := donegroup.Clenup(ctx, func(_ context.Context) error {
+	if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
 		time.Sleep(1 * time.Second)
 		fmt.Println("cleanup 2")
 		return nil
@@ -72,7 +72,7 @@ Note that each cleanup process must handle its own context argument.
 ctx, cancel := WithCancel(context.Background())
 
 // Cleanup process of some kind
-if err := Clenup(ctx, func(ctx context.Context) error {
+if err := Cleanup(ctx, func(ctx context.Context) error {
 	for i := 0; i < 10; i++ {
 		select {
 		case <-ctx.Done():

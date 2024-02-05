@@ -48,13 +48,13 @@ func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.C
 	return context.WithValue(secondCtx, key, secondDg), secondCancel
 }
 
-// Clenup registers a function to be called when the context is canceled.
-func Clenup(ctx context.Context, f func(ctx context.Context) error) error {
-	return ClenupWithKey(ctx, doneGroupKey, f)
+// Cleanup registers a function to be called when the context is canceled.
+func Cleanup(ctx context.Context, f func(ctx context.Context) error) error {
+	return CleanupWithKey(ctx, doneGroupKey, f)
 }
 
-// ClenupWithKey Clenup registers a function to be called when the context is canceled.
-func ClenupWithKey(ctx context.Context, key any, f func(ctx context.Context) error) error {
+// CleanupWithKey Cleanup registers a function to be called when the context is canceled.
+func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) error) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
