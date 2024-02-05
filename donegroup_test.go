@@ -2,6 +2,7 @@ package donegroup
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -13,7 +14,7 @@ func TestDoneGroup(t *testing.T) {
 
 	cleanup := false
 
-	if err := Clenup(ctx, func() error {
+	if err := Clenup(ctx, func(_ context.Context) error {
 		time.Sleep(10 * time.Millisecond)
 		cleanup = true
 		return nil
@@ -44,7 +45,7 @@ func TestMultiCleanup(t *testing.T) {
 	cleanup := 0
 
 	for i := 0; i < 10; i++ {
-		if err := Clenup(ctx, func() error {
+		if err := Clenup(ctx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -78,7 +79,7 @@ func TestNested(t *testing.T) {
 	secondCleanup := 0
 
 	for i := 0; i < 10; i++ {
-		if err := Clenup(firstCtx, func() error {
+		if err := Clenup(firstCtx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -90,7 +91,7 @@ func TestNested(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		if err := Clenup(secondCtx, func() error {
+		if err := Clenup(secondCtx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -137,7 +138,7 @@ func TestRootWaitAll(t *testing.T) {
 	leafCleanup := 0
 
 	for i := 0; i < 10; i++ {
-		if err := Clenup(rootCtx, func() error {
+		if err := Clenup(rootCtx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -149,7 +150,7 @@ func TestRootWaitAll(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		if err := Clenup(leafCtx, func() error {
+		if err := Clenup(leafCtx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -177,6 +178,35 @@ func TestRootWaitAll(t *testing.T) {
 
 		if rootCleanup != 10 {
 			t.Error("cleanup function for root not called")
+		}
+	}()
+}
+
+func TestWaitWithTimeout(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := WithCancel(context.Background())
+
+	if err := Clenup(ctx, func(ctx context.Context) error {
+		for i := 0; i < 10; i++ {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+				time.Sleep(2 * time.Millisecond)
+			}
+		}
+		return nil
+	}); err != nil {
+		t.Error(err)
+	}
+
+	timeout := 5 * time.Millisecond
+
+	defer func() {
+		cancel()
+
+		if err := WaitWithTimeout(ctx, timeout); !errors.Is(err, context.DeadlineExceeded) {
+			t.Error("expected timeout error")
 		}
 	}()
 }

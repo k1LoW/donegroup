@@ -12,7 +12,7 @@ import (
 func Example() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
-	if err := donegroup.Clenup(ctx, func() error {
+	if err := donegroup.Clenup(ctx, func(_ context.Context) error {
 		// Cleanup process of some kind
 		time.Sleep(10 * time.Millisecond)
 		fmt.Println("cleanup")
