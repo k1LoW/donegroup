@@ -2,6 +2,7 @@ package donegroup
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -185,18 +186,15 @@ func TestWaitWithTimeout(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
 
-	cleanup := false
-
 	if err := Clenup(ctx, func(ctx context.Context) error {
 		for i := 0; i < 10; i++ {
 			select {
 			case <-ctx.Done():
-				return nil
+				return ctx.Err()
 			default:
 				time.Sleep(2 * time.Millisecond)
 			}
 		}
-		cleanup = true
 		return nil
 	}); err != nil {
 		t.Error(err)
@@ -207,14 +205,8 @@ func TestWaitWithTimeout(t *testing.T) {
 	defer func() {
 		cancel()
 
-		if err := WaitWithTimeout(ctx, timeout); err != nil {
-			t.Error(err)
-		}
-
-		if cleanup {
-			t.Error("cleanup function called")
+		if err := WaitWithTimeout(ctx, timeout); !errors.Is(err, context.Canceled) {
+			t.Error("expected timeout error")
 		}
 	}()
-
-	cleanup = false
 }
