@@ -1,4 +1,4 @@
-# donegroup
+# donegroup [![Go Reference](https://pkg.go.dev/badge/github.com/k1LoW/donegroup.svg)](https://pkg.go.dev/github.com/k1LoW/donegroup) [![CI](https://github.com/k1LoW/donegroup/actions/workflows/ci.yml/badge.svg)](https://github.com/k1LoW/donegroup/actions/workflows/ci.yml) ![Coverage](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/donegroup/coverage.svg) ![Code to Test Ratio](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/donegroup/ratio.svg) ![Test Execution Time](https://raw.githubusercontent.com/k1LoW/octocovs/main/badges/k1LoW/donegroup/time.svg)
 
 `donegroup` is a package that provides a graceful cleanup transaction to context.Context when the context is canceled ( **done** ).
 
