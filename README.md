@@ -42,8 +42,6 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Main process of some kind
-
 	defer func() {
 		cancel()
 		if err := donegroup.Wait(ctx); err != nil {
@@ -51,10 +49,11 @@ func main() {
 		}
 	}()
 
-	fmt.Println("finish")
+	// Main process of some kind
+	fmt.Println("main")
 
 	// Output:
-	// finish
+	// main finish
 	// cleanup 1
 	// cleanup 2
 }
@@ -73,6 +72,7 @@ ctx, cancel := WithCancel(context.Background())
 
 // Cleanup process of some kind
 if err := Cleanup(ctx, func(ctx context.Context) error {
+	fmt.Println("cleanup start")
 	for i := 0; i < 10; i++ {
 		select {
 		case <-ctx.Done():
@@ -81,13 +81,11 @@ if err := Cleanup(ctx, func(ctx context.Context) error {
 			time.Sleep(2 * time.Millisecond)
 		}
 	}
-	fmt.Println("cleanup")
+	fmt.Println("cleanup finish")
 	return nil
 }); err != nil {
 	log.Fatal(err)
 }
-
-// Main process of some kind
 
 defer func() {
 	cancel()
@@ -97,9 +95,14 @@ defer func() {
 	}
 }()
 
-fmt.Println("finish")
+// Main process of some kind
+fmt.Println("main start")
+
+fmt.Println("main finish")
 
 // Output:
-// finish
+// main start
+// main finish
+// cleanup start
 ```
 
