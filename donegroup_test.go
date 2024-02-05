@@ -204,6 +204,7 @@ func TestWaitWithContext(t *testing.T) {
 
 	defer func() {
 		cancel()
+		time.Sleep(10 * time.Millisecond)
 		ctxx, cancelx := context.WithTimeout(context.Background(), timeout)
 		defer cancelx()
 		if err := WaitWithContext(ctx, ctxx); !errors.Is(err, context.DeadlineExceeded) {

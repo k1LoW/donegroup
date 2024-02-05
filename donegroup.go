@@ -11,7 +11,11 @@ import (
 var doneGroupKey = struct{}{}
 
 type doneGroup struct {
-	ctx           context.Context
+	ctx    context.Context
+	cancel context.CancelFunc
+
+	// context.Context for after the context is canceled
+	ctxw          context.Context
 	cleanupGroups []*errgroup.Group
 	mu            sync.Mutex
 }
@@ -26,11 +30,19 @@ func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.C
 	secondCtx, secondCancel := context.WithCancel(ctx)
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
-		dg = &doneGroup{}
+		ctx, cancel := context.WithCancel(context.Background())
+		dg = &doneGroup{
+			ctx:    ctx,
+			cancel: cancel,
+		}
 	}
 	eg := new(errgroup.Group)
 	dg.cleanupGroups = append(dg.cleanupGroups, eg)
-	secondDg := &doneGroup{cleanupGroups: []*errgroup.Group{eg}}
+	secondDg := &doneGroup{
+		ctx:           dg.ctx,
+		cancel:        dg.cancel,
+		cleanupGroups: []*errgroup.Group{eg},
+	}
 	return context.WithValue(secondCtx, key, secondDg), secondCancel
 }
 
@@ -49,7 +61,11 @@ func ClenupWithKey(ctx context.Context, key any, f func(ctx context.Context) err
 	first := dg.cleanupGroups[0]
 	first.Go(func() error {
 		<-ctx.Done()
-		return dg.goWithCtx(f)
+		<-dg.ctx.Done()
+		dg.mu.Lock()
+		ctx := dg.ctxw
+		dg.mu.Unlock()
+		return f(ctx)
 	})
 	return nil
 }
@@ -59,9 +75,9 @@ func Wait(ctx context.Context) error {
 	return WaitWithKey(ctx, doneGroupKey)
 }
 
-// Wait blocks until the context (ctx) is canceled. Then calls the function registered in Cleanup with context (ctxx).
-func WaitWithContext(ctx, ctxx context.Context) error {
-	return WaitWithContextAndKey(ctx, ctxx, doneGroupKey)
+// Wait blocks until the context (ctx) is canceled. Then calls the function registered in Cleanup with context (ctxw).
+func WaitWithContext(ctx, ctxw context.Context) error {
+	return WaitWithContextAndKey(ctx, ctxw, doneGroupKey)
 }
 
 // WaitWithKey blocks until the context is canceled.
@@ -70,27 +86,20 @@ func WaitWithKey(ctx context.Context, key any) error {
 }
 
 // WaitWithKeyAndContext blocks until the context is canceled. Then calls the function registered in Cleanup with context (ctxx).
-func WaitWithContextAndKey(ctx, ctxx context.Context, key any) error {
+func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
 	}
 	dg.mu.Lock()
-	dg.ctx = ctxx
+	dg.ctxw = ctxw
 	dg.mu.Unlock()
-
 	<-ctx.Done()
-	eg, _ := errgroup.WithContext(ctxx)
+	dg.cancel()
+	eg, _ := errgroup.WithContext(ctxw)
 	for _, g := range dg.cleanupGroups {
 		eg.Go(g.Wait)
 	}
 
 	return eg.Wait()
-}
-
-func (dg *doneGroup) goWithCtx(f func(ctx context.Context) error) error {
-	dg.mu.Lock()
-	ctx := dg.ctx
-	dg.mu.Unlock()
-	return f(ctx)
 }
