@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -76,6 +77,11 @@ func Wait(ctx context.Context) error {
 	return WaitWithKey(ctx, doneGroupKey)
 }
 
+// WaitWithTimeout blocks until the context (ctx) is canceled. Then calls the function registered by Cleanup with timeout.
+func WaitWithTimeout(ctx context.Context, timeout time.Duration) error {
+	return WaitWithTimeoutAndKey(ctx, timeout, doneGroupKey)
+}
+
 // WaitWithContext blocks until the context (ctx) is canceled. Then calls the function registered by Cleanup with context (ctxw).
 func WaitWithContext(ctx, ctxw context.Context) error {
 	return WaitWithContextAndKey(ctx, ctxw, doneGroupKey)
@@ -84,6 +90,13 @@ func WaitWithContext(ctx, ctxw context.Context) error {
 // WaitWithKey blocks until the context is canceled. Then calls the function registered by Cleanup.
 func WaitWithKey(ctx context.Context, key any) error {
 	return WaitWithContextAndKey(ctx, context.Background(), key)
+}
+
+// WaitWithTimeoutAndKey blocks until the context is canceled. Then calls the function registered by Cleanup with timeout.
+func WaitWithTimeoutAndKey(ctx context.Context, timeout time.Duration, key any) error {
+	ctxw, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	return WaitWithContextAndKey(ctx, ctxw, key)
 }
 
 // WaitWithContextAndKey blocks until the context is canceled. Then calls the function registered by Cleanup with context (ctxx).
