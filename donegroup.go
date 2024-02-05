@@ -72,7 +72,6 @@ func WaitWithKey(ctx context.Context, key any) error {
 
 // WaitWithKeyAndTimeout blocks until the context is canceled or the timeout is reached.
 func WaitWithKeyAndTimeout(ctx context.Context, key any, timeout time.Duration) error {
-	<-ctx.Done()
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
@@ -86,6 +85,8 @@ func WaitWithKeyAndTimeout(ctx context.Context, key any, timeout time.Duration) 
 	dg.mu.Lock()
 	dg.ctx = ctxx
 	dg.mu.Unlock()
+
+	<-ctx.Done()
 	eg, _ := errgroup.WithContext(ctxx)
 	for _, g := range dg.cleanupGroups {
 		eg.Go(g.Wait)
