@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -11,6 +12,8 @@ import (
 var doneGroupKey = struct{}{}
 
 type doneGroup struct {
+	ctx           context.Context
+	cancel        context.CancelFunc
 	cleanupGroups []*errgroup.Group
 	mu            sync.Mutex
 }
@@ -22,24 +25,32 @@ func WithCancel(ctx context.Context) (context.Context, context.CancelFunc) {
 
 // WithCancelWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.CancelFunc) {
+	doneCtx, doneCancel := context.WithCancel(context.Background())
 	secondCtx, secondCancel := context.WithCancel(ctx)
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
-		dg = &doneGroup{}
+		dg = &doneGroup{
+			ctx:    doneCtx,
+			cancel: doneCancel,
+		}
 	}
 	eg := new(errgroup.Group)
 	dg.cleanupGroups = append(dg.cleanupGroups, eg)
-	secondDg := &doneGroup{cleanupGroups: []*errgroup.Group{eg}}
+	secondDg := &doneGroup{
+		ctx:           doneCtx,
+		cancel:        doneCancel,
+		cleanupGroups: []*errgroup.Group{eg},
+	}
 	return context.WithValue(secondCtx, key, secondDg), secondCancel
 }
 
 // Clenup runs f when the context is canceled.
-func Clenup(ctx context.Context, f func() error) error {
+func Clenup(ctx context.Context, f func(ctx context.Context) error) error {
 	return ClenupWithKey(ctx, doneGroupKey, f)
 }
 
 // ClenupWithKey runs f when the context is canceled.
-func ClenupWithKey(ctx context.Context, key any, f func() error) error {
+func ClenupWithKey(ctx context.Context, key any, f func(ctx context.Context) error) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		return errors.New("donegroup: context does not contain a donegroup. Use donegroup.WithCancel to create a context with a donegroup")
@@ -48,7 +59,7 @@ func ClenupWithKey(ctx context.Context, key any, f func() error) error {
 	first := dg.cleanupGroups[0]
 	first.Go(func() error {
 		<-ctx.Done()
-		return f()
+		return f(dg.ctx)
 	})
 	return nil
 }
@@ -58,16 +69,37 @@ func Wait(ctx context.Context) error {
 	return WaitWithKey(ctx, doneGroupKey)
 }
 
+// Wait blocks until the context is canceled or the timeout is reached.
+func WaitWithTimeout(ctx context.Context, timeout time.Duration) error {
+	return WaitWithKeyAndTimeout(ctx, doneGroupKey, timeout)
+}
+
 // WaitWithKey blocks until the context is canceled.
 func WaitWithKey(ctx context.Context, key any) error {
+	return WaitWithKeyAndTimeout(ctx, key, 0)
+}
+
+// WaitWithKeyAndTimeout blocks until the context is canceled or the timeout is reached.
+func WaitWithKeyAndTimeout(ctx context.Context, key any, timeout time.Duration) error {
 	<-ctx.Done()
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		return errors.New("donegroup: context does not contain a donegroup. Use donegroup.WithCancel to create a context with a donegroup")
 	}
-	eg := new(errgroup.Group)
+	ctxx := context.Background()
+	go func() {
+		<-ctxx.Done()
+		dg.cancel()
+	}()
+	var cancel context.CancelFunc
+	if timeout != 0 {
+		ctxx, cancel = context.WithTimeout(ctxx, timeout)
+		defer cancel()
+	}
+	eg, _ := errgroup.WithContext(ctxx)
 	for _, g := range dg.cleanupGroups {
 		eg.Go(g.Wait)
 	}
+
 	return eg.Wait()
 }
