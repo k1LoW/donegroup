@@ -59,7 +59,7 @@ func Wait(ctx context.Context) error {
 	return WaitWithKey(ctx, doneGroupKey)
 }
 
-// Wait blocks until the context (ctx) is canceled. Then calls the function registered in Cleanup with context (ctxx)
+// Wait blocks until the context (ctx) is canceled. Then calls the function registered in Cleanup with context (ctxx).
 func WaitWithContext(ctx, ctxx context.Context) error {
 	return WaitWithKeyAndContext(ctx, doneGroupKey, ctxx)
 }
@@ -69,7 +69,7 @@ func WaitWithKey(ctx context.Context, key any) error {
 	return WaitWithKeyAndContext(ctx, key, context.Background())
 }
 
-// WaitWithKeyAndContext blocks until the context is canceled. Then calls the function registered in Cleanup with context (ctxx)
+// WaitWithKeyAndContext blocks until the context is canceled. Then calls the function registered in Cleanup with context (ctxx).
 func WaitWithKeyAndContext(ctx context.Context, key any, ctxx context.Context) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
