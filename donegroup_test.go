@@ -182,7 +182,7 @@ func TestRootWaitAll(t *testing.T) {
 	}()
 }
 
-func TestWaitWithTimeout(t *testing.T) {
+func TestWaitWithContext(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
 
@@ -204,8 +204,10 @@ func TestWaitWithTimeout(t *testing.T) {
 
 	defer func() {
 		cancel()
-
-		if err := WaitWithTimeout(ctx, timeout); !errors.Is(err, context.DeadlineExceeded) {
+		time.Sleep(10 * time.Millisecond)
+		ctxx, cancelx := context.WithTimeout(context.Background(), timeout)
+		defer cancelx()
+		if err := WaitWithContext(ctx, ctxx); !errors.Is(err, context.DeadlineExceeded) {
 			t.Error("expected timeout error")
 		}
 	}()
