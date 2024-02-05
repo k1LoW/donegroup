@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -60,27 +59,21 @@ func Wait(ctx context.Context) error {
 	return WaitWithKey(ctx, doneGroupKey)
 }
 
-// Wait blocks until the context is canceled or the timeout is reached.
-func WaitWithTimeout(ctx context.Context, timeout time.Duration) error {
-	return WaitWithKeyAndTimeout(ctx, doneGroupKey, timeout)
+// Wait blocks until the context (ctx) is canceled. Then calls the function registered in Cleanup with context (ctxx)
+func WaitWithContext(ctx, ctxx context.Context) error {
+	return WaitWithKeyAndContext(ctx, doneGroupKey, ctxx)
 }
 
 // WaitWithKey blocks until the context is canceled.
 func WaitWithKey(ctx context.Context, key any) error {
-	return WaitWithKeyAndTimeout(ctx, key, 0)
+	return WaitWithKeyAndContext(ctx, key, context.Background())
 }
 
-// WaitWithKeyAndTimeout blocks until the context is canceled or the timeout is reached.
-func WaitWithKeyAndTimeout(ctx context.Context, key any, timeout time.Duration) error {
+// WaitWithKeyAndContext blocks until the context is canceled. Then calls the function registered in Cleanup with context (ctxx)
+func WaitWithKeyAndContext(ctx context.Context, key any, ctxx context.Context) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
-	}
-	ctxx := context.Background()
-	var cancel context.CancelFunc
-	if timeout != 0 {
-		ctxx, cancel = context.WithTimeout(ctxx, timeout)
-		defer cancel()
 	}
 	dg.mu.Lock()
 	dg.ctx = ctxx
