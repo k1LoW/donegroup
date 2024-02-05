@@ -14,7 +14,7 @@ func TestDoneGroup(t *testing.T) {
 
 	cleanup := false
 
-	if err := Clenup(ctx, func(_ context.Context) error {
+	if err := Cleanup(ctx, func(_ context.Context) error {
 		time.Sleep(10 * time.Millisecond)
 		cleanup = true
 		return nil
@@ -45,7 +45,7 @@ func TestMultiCleanup(t *testing.T) {
 	cleanup := 0
 
 	for i := 0; i < 10; i++ {
-		if err := Clenup(ctx, func(_ context.Context) error {
+		if err := Cleanup(ctx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -79,7 +79,7 @@ func TestNested(t *testing.T) {
 	secondCleanup := 0
 
 	for i := 0; i < 10; i++ {
-		if err := Clenup(firstCtx, func(_ context.Context) error {
+		if err := Cleanup(firstCtx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -91,7 +91,7 @@ func TestNested(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		if err := Clenup(secondCtx, func(_ context.Context) error {
+		if err := Cleanup(secondCtx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -138,7 +138,7 @@ func TestRootWaitAll(t *testing.T) {
 	leafCleanup := 0
 
 	for i := 0; i < 10; i++ {
-		if err := Clenup(rootCtx, func(_ context.Context) error {
+		if err := Cleanup(rootCtx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -150,7 +150,7 @@ func TestRootWaitAll(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		if err := Clenup(leafCtx, func(_ context.Context) error {
+		if err := Cleanup(leafCtx, func(_ context.Context) error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -186,7 +186,7 @@ func TestWaitWithTimeout(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
 
-	if err := Clenup(ctx, func(ctx context.Context) error {
+	if err := Cleanup(ctx, func(ctx context.Context) error {
 		for i := 0; i < 10; i++ {
 			select {
 			case <-ctx.Done():
