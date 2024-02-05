@@ -38,10 +38,14 @@ func Example() {
 		}
 	}()
 
-	fmt.Println("finish")
+	// Main process of some kind
+	fmt.Println("main start")
+
+	fmt.Println("main finish")
 
 	// Output:
-	// finish
+	// main start
+	// main finish
 	// cleanup
 	// cleanup with sleep
 }
@@ -60,13 +64,11 @@ func ExampleWaitWithTimeout() {
 				time.Sleep(2 * time.Millisecond)
 			}
 		}
-		fmt.Println("cleanup end")
+		fmt.Println("cleanup finish")
 		return nil
 	}); err != nil {
 		log.Fatal(err)
 	}
-
-	// Main process of some kind
 
 	defer func() {
 		cancel()
@@ -76,9 +78,13 @@ func ExampleWaitWithTimeout() {
 		}
 	}()
 
-	fmt.Println("finish")
+	// Main process of some kind
+	fmt.Println("main start")
+
+	fmt.Println("main finish")
 
 	// Output:
-	// finish
+	// main start
+	// main finish
 	// cleanup start
 }
