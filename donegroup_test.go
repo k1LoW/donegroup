@@ -2,11 +2,13 @@ package donegroup
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 )
 
 func TestDoneGroup(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
 
 	cleanup := false
@@ -35,13 +37,17 @@ func TestDoneGroup(t *testing.T) {
 }
 
 func TestMultiCleanup(t *testing.T) {
+	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
 
+	mu := sync.Mutex{}
 	cleanup := 0
 
 	for i := 0; i < 10; i++ {
 		if err := Clenup(ctx, func() error {
 			time.Sleep(10 * time.Millisecond)
+			mu.Lock()
+			defer mu.Unlock()
 			cleanup += 1
 			return nil
 		}); err != nil {
@@ -63,15 +69,19 @@ func TestMultiCleanup(t *testing.T) {
 }
 
 func TestNested(t *testing.T) {
+	t.Parallel()
 	firstCtx, firstCancel := WithCancel(context.Background())
 	secondCtx, secondCancel := WithCancel(firstCtx)
 
+	mu := sync.Mutex{}
 	firstCleanup := 0
 	secondCleanup := 0
 
 	for i := 0; i < 10; i++ {
 		if err := Clenup(firstCtx, func() error {
 			time.Sleep(10 * time.Millisecond)
+			mu.Lock()
+			defer mu.Unlock()
 			firstCleanup += 1
 			return nil
 		}); err != nil {
@@ -82,6 +92,8 @@ func TestNested(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		if err := Clenup(secondCtx, func() error {
 			time.Sleep(10 * time.Millisecond)
+			mu.Lock()
+			defer mu.Unlock()
 			secondCleanup += 1
 			return nil
 		}); err != nil {
@@ -116,15 +128,19 @@ func TestNested(t *testing.T) {
 }
 
 func TestRootWaitAll(t *testing.T) {
+	t.Parallel()
 	rootCtx, rootCancel := WithCancel(context.Background())
 	leafCtx, _ := WithCancel(rootCtx)
 
+	mu := sync.Mutex{}
 	rootCleanup := 0
 	leafCleanup := 0
 
 	for i := 0; i < 10; i++ {
 		if err := Clenup(rootCtx, func() error {
 			time.Sleep(10 * time.Millisecond)
+			mu.Lock()
+			defer mu.Unlock()
 			rootCleanup += 1
 			return nil
 		}); err != nil {
@@ -135,6 +151,8 @@ func TestRootWaitAll(t *testing.T) {
 	for i := 0; i < 5; i++ {
 		if err := Clenup(leafCtx, func() error {
 			time.Sleep(10 * time.Millisecond)
+			mu.Lock()
+			defer mu.Unlock()
 			leafCleanup += 1
 			return nil
 		}); err != nil {

@@ -3,6 +3,7 @@ package donegroup
 import (
 	"context"
 	"errors"
+	"sync"
 
 	"golang.org/x/sync/errgroup"
 )
@@ -11,6 +12,7 @@ var doneGroupKey = struct{}{}
 
 type doneGroup struct {
 	cleanupGroups []*errgroup.Group
+	mu            sync.Mutex
 }
 
 // WithCancel returns a copy of parent with a new Done channel and a doneGroup.
@@ -42,6 +44,7 @@ func ClenupWithKey(ctx context.Context, key any, f func() error) error {
 	if !ok {
 		return errors.New("donegroup: context does not contain a donegroup. Use donegroup.WithCancel to create a context with a donegroup")
 	}
+
 	first := dg.cleanupGroups[0]
 	first.Go(func() error {
 		<-ctx.Done()
