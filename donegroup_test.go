@@ -205,7 +205,7 @@ func TestWaitWithTimeout(t *testing.T) {
 	defer func() {
 		cancel()
 
-		if err := WaitWithTimeout(ctx, timeout); !errors.Is(err, context.Canceled) {
+		if err := WaitWithTimeout(ctx, timeout); !errors.Is(err, context.DeadlineExceeded) {
 			t.Error("expected timeout error")
 		}
 	}()

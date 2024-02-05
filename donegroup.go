@@ -12,7 +12,6 @@ var doneGroupKey = struct{}{}
 
 type doneGroup struct {
 	ctx           context.Context
-	cancel        context.CancelFunc
 	cleanupGroups []*errgroup.Group
 }
 
@@ -23,22 +22,14 @@ func WithCancel(ctx context.Context) (context.Context, context.CancelFunc) {
 
 // WithCancelWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.CancelFunc) {
-	doneCtx, doneCancel := context.WithCancel(context.Background())
 	secondCtx, secondCancel := context.WithCancel(ctx)
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
-		dg = &doneGroup{
-			ctx:    doneCtx,
-			cancel: doneCancel,
-		}
+		dg = &doneGroup{}
 	}
 	eg := new(errgroup.Group)
 	dg.cleanupGroups = append(dg.cleanupGroups, eg)
-	secondDg := &doneGroup{
-		ctx:           doneCtx,
-		cancel:        doneCancel,
-		cleanupGroups: []*errgroup.Group{eg},
-	}
+	secondDg := &doneGroup{cleanupGroups: []*errgroup.Group{eg}}
 	return context.WithValue(secondCtx, key, secondDg), secondCancel
 }
 
@@ -57,7 +48,7 @@ func ClenupWithKey(ctx context.Context, key any, f func(ctx context.Context) err
 	first := dg.cleanupGroups[0]
 	first.Go(func() error {
 		<-ctx.Done()
-		return f(dg.ctx)
+		return dg.goWithCtx(f)
 	})
 	return nil
 }
@@ -90,14 +81,15 @@ func WaitWithKeyAndTimeout(ctx context.Context, key any, timeout time.Duration) 
 		ctxx, cancel = context.WithTimeout(ctxx, timeout)
 		defer cancel()
 	}
-	go func() {
-		<-ctxx.Done()
-		dg.cancel()
-	}()
+	dg.ctx = ctxx
 	eg, _ := errgroup.WithContext(ctxx)
 	for _, g := range dg.cleanupGroups {
 		eg.Go(g.Wait)
 	}
 
 	return eg.Wait()
+}
+
+func (dg *doneGroup) goWithCtx(f func(ctx context.Context) error) error {
+	return f(dg.ctx)
 }
