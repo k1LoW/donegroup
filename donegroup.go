@@ -44,7 +44,7 @@ func Clenup(ctx context.Context, f func(ctx context.Context) error) error {
 func ClenupWithKey(ctx context.Context, key any, f func(ctx context.Context) error) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
-		return errors.New("donegroup: context does not contain a donegroup. Use donegroup.WithCancel to create a context with a donegroup")
+		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
 	}
 
 	first := dg.cleanupGroups[0]
@@ -75,7 +75,7 @@ func WaitWithKeyAndTimeout(ctx context.Context, key any, timeout time.Duration) 
 	<-ctx.Done()
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
-		return errors.New("donegroup: context does not contain a donegroup. Use donegroup.WithCancel to create a context with a donegroup")
+		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
 	}
 	ctxx := context.Background()
 	var cancel context.CancelFunc
