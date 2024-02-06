@@ -49,6 +49,45 @@ func Example() {
 	// cleanup with sleep
 }
 
+func Example_goroutine() {
+	ctx, cancel := donegroup.WithCancel(context.Background())
+
+	go func() {
+		if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
+			time.Sleep(10 * time.Millisecond)
+			fmt.Println("cleanup")
+			return nil
+		}); err != nil {
+			log.Fatal(err)
+		}
+
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-time.After(10 * time.Millisecond):
+				fmt.Println("do something")
+			}
+		}
+	}()
+
+	// Main process of some kind
+	fmt.Println("main")
+	time.Sleep(35 * time.Millisecond)
+
+	cancel()
+	if err := donegroup.Wait(ctx); err != nil {
+		log.Fatal(err)
+	}
+
+	// Output:
+	// main
+	// do something
+	// do something
+	// do something
+	// cleanup
+}
+
 func ExampleWaitWithTimeout() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
