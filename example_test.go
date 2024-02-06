@@ -53,13 +53,11 @@ func Example_goroutine() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
 	go func() {
-		if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
-			time.Sleep(10 * time.Millisecond)
+		donegroup.Cleanup(ctx, func(_ context.Context) error {
+			time.Sleep(100 * time.Millisecond)
 			fmt.Println("cleanup")
 			return nil
-		}); err != nil {
-			log.Fatal(err)
-		}
+		})
 
 		for {
 			select {
