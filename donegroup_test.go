@@ -37,6 +37,50 @@ func TestDoneGroup(t *testing.T) {
 	cleanup = false
 }
 
+func TestCleanup(t *testing.T) {
+	t.Parallel()
+	t.Run("Cleanup with WithCancel", func(t *testing.T) {
+		ctx, cancel := WithCancel(context.Background())
+		defer cancel()
+		err := Cleanup(ctx, func(_ context.Context) error {
+			return nil
+		})
+		if err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("Cleanup without WithCancel", func(t *testing.T) {
+		ctx := context.Background()
+		err := Cleanup(ctx, func(_ context.Context) error {
+			return nil
+		})
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+	})
+}
+
+func TestWait(t *testing.T) {
+	t.Parallel()
+	t.Run("Wait with WithCancel", func(t *testing.T) {
+		ctx, cancel := WithCancel(context.Background())
+		cancel()
+		err := Wait(ctx)
+		if err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("Wait without WithCancel", func(t *testing.T) {
+		ctx := context.Background()
+		err := Wait(ctx)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+	})
+}
+
 func TestMultiCleanup(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
@@ -206,6 +250,37 @@ func TestWaitWithTimeout(t *testing.T) {
 		cancel()
 		time.Sleep(10 * time.Millisecond)
 		if err := WaitWithTimeout(ctx, timeout); !errors.Is(err, context.DeadlineExceeded) {
+			t.Error("expected timeout error")
+		}
+	}()
+}
+
+func TestWaitWithContext(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := WithCancel(context.Background())
+
+	if err := Cleanup(ctx, func(ctx context.Context) error {
+		for i := 0; i < 10; i++ {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+				time.Sleep(2 * time.Millisecond)
+			}
+		}
+		return nil
+	}); err != nil {
+		t.Error(err)
+	}
+
+	timeout := 5 * time.Millisecond
+
+	defer func() {
+		cancel()
+		ctxx, cancelx := context.WithTimeout(context.Background(), timeout)
+		defer cancelx()
+		time.Sleep(10 * time.Millisecond)
+		if err := WaitWithContext(ctx, ctxx); !errors.Is(err, context.DeadlineExceeded) {
 			t.Error("expected timeout error")
 		}
 	}()
