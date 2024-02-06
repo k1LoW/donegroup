@@ -90,8 +90,8 @@ if err := Cleanup(ctx, func(ctx context.Context) error {
 defer func() {
 	cancel()
 	timeout := 5 * time.Millisecond
-	if err := WaitWithTimeout(ctx, timeout); err != nil && !errors.Is(err, context.DeadlineExceeded) {
-		log.Fatal(err)
+	if err := WaitWithTimeout(ctx, timeout); err != nil {
+		fmt.Println(err)
 	}
 }()
 
@@ -104,5 +104,6 @@ fmt.Println("main finish")
 // main start
 // main finish
 // cleanup start
+// context deadline exceeded
 ```
 

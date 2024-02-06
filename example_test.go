@@ -2,7 +2,6 @@ package donegroup_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
 	"time"
@@ -73,8 +72,8 @@ func ExampleWaitWithTimeout() {
 	defer func() {
 		cancel()
 		timeout := 5 * time.Millisecond
-		if err := donegroup.WaitWithTimeout(ctx, timeout); err != nil && !errors.Is(err, context.DeadlineExceeded) {
-			log.Fatal(err)
+		if err := donegroup.WaitWithTimeout(ctx, timeout); err != nil {
+			fmt.Println(err)
 		}
 	}()
 
@@ -87,4 +86,5 @@ func ExampleWaitWithTimeout() {
 	// main start
 	// main finish
 	// cleanup start
+	// context deadline exceeded
 }
