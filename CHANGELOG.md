@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.0.0](https://github.com/k1LoW/donegroup/compare/v0.2.3...v1.0.0) - 2024-02-06
+### Other Changes
+- Add example by @k1LoW in https://github.com/k1LoW/donegroup/pull/11
+
 ## [v0.2.3](https://github.com/k1LoW/donegroup/compare/v0.2.2...v0.2.3) - 2024-02-05
 ### Fix bug 🐛
 - Fix typo by @k1LoW in https://github.com/k1LoW/donegroup/pull/9
