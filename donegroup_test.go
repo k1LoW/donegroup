@@ -81,6 +81,19 @@ func TestWait(t *testing.T) {
 	})
 }
 
+func TestNoCleanup(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := WithCancel(context.Background())
+
+	defer func() {
+		cancel()
+
+		if err := Wait(ctx); err != nil {
+			t.Error(err)
+		}
+	}()
+}
+
 func TestMultiCleanup(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
