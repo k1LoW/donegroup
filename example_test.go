@@ -53,7 +53,11 @@ func ExampleAwaiter() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
 	go func() {
-		completed := donegroup.Awaiter(ctx)
+		completed, err := donegroup.Awaiter(ctx)
+		if err != nil {
+			log.Fatal(err)
+			return
+		}
 		for {
 			select {
 			case <-ctx.Done():
@@ -84,11 +88,11 @@ func ExampleAwaiter() {
 	// cleanup
 }
 
-func ExampleAwaiter_defer() {
+func ExampleAwaitable() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
 	go func() {
-		defer donegroup.Awaiter(ctx)()
+		defer donegroup.Awaitable(ctx)()
 		for {
 			select {
 			case <-ctx.Done():

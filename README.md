@@ -136,7 +136,11 @@ In addition to using [donegroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/don
 ctx, cancel := donegroup.WithCancel(context.Background())
 
 go func() {
-	completed := donegroup.Awaiter(ctx)
+	completed, err := donegroup.Awaiter(ctx)
+	if err != nil {
+		log.Fatal(err)
+		return
+    }
 	for {
 		select {
 		case <-ctx.Done():
@@ -167,11 +171,11 @@ if err := donegroup.Wait(ctx); err != nil {
 // cleanup
 ```
 
-It is also possible to guarantee the execution of a function block using `defer`.
+It is also possible to guarantee the execution of a function block using `defer donegroup.Awaitable(ctx)()`.
 
 ``` go
 go func() {
-	defer donegroup.Awaiter(ctx)()
+	defer donegroup.Awaitable(ctx)()
 	for {
 		select {
 		case <-ctx.Done():
