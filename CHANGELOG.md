@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.3.0](https://github.com/k1LoW/donegroup/compare/v1.2.0...v1.3.0) - 2024-02-07
+### Breaking Changes 🛠
+- Add Awaitable by @k1LoW in https://github.com/k1LoW/donegroup/pull/19
+### Other Changes
+- Add ErrNotContainDoneGroup by @k1LoW in https://github.com/k1LoW/donegroup/pull/17
+
 ## [v1.2.0](https://github.com/k1LoW/donegroup/compare/v1.1.0...v1.2.0) - 2024-02-07
 ### New Features 🎉
 - Add Cancel for canceling context and waiting for cleanup functions at once. by @k1LoW in https://github.com/k1LoW/donegroup/pull/16
