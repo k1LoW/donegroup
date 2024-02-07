@@ -185,11 +185,13 @@ func AwaiterWithKey(ctx context.Context, key any) (completed func(), err error) 
 }
 
 // Awaitable returns a function that guarantees execution of the process until it is called.
+// Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
 func Awaitable(ctx context.Context) (completed func()) {
 	return AwaitableWithKey(ctx, doneGroupKey)
 }
 
 // AwaitableWithKey returns a function that guarantees execution of the process until it is called.
+// Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
 func AwaitableWithKey(ctx context.Context, key any) (completed func()) {
 	completed, err := AwaiterWithKey(ctx, key)
 	if err != nil {
