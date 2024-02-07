@@ -11,7 +11,7 @@ import (
 
 var doneGroupKey = struct{}{}
 
-// doneGroup is cleanup function groups per Context
+// doneGroup is cleanup function groups per Context.
 type doneGroup struct {
 	// ctxw is the context used to call the cleanup functions
 	ctxw          context.Context
@@ -65,9 +65,9 @@ func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) er
 		<-ctx.Done()
 		<-dg._ctx.Done()
 		dg.mu.Lock()
-		ctx := dg.ctxw
+		ctxw := dg.ctxw
 		dg.mu.Unlock()
-		return f(ctx)
+		return f(ctxw)
 	})
 	return nil
 }
@@ -116,4 +116,29 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	}
 
 	return eg.Wait()
+}
+
+// Awaiter returns a function that guarantees execution of the process until it is called.
+// Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
+func Awaiter(ctx context.Context) (completed func()) {
+	return AwaiterWithKey(ctx, doneGroupKey)
+}
+
+// AwaiterWithKey returns a function that guarantees execution of the process until it is called.
+// Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
+func AwaiterWithKey(ctx context.Context, key any) (completed func()) {
+	ctxx, completed := context.WithCancel(context.Background())
+	if err := CleanupWithKey(ctx, key, func(ctxw context.Context) error {
+		for {
+			select {
+			case <-ctxw.Done():
+				return ctxw.Err()
+			case <-ctxx.Done():
+				return nil
+			}
+		}
+	}); err != nil {
+		panic(err)
+	}
+	return completed
 }

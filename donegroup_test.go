@@ -298,3 +298,52 @@ func TestWaitWithContext(t *testing.T) {
 		}
 	}()
 }
+
+func TestAwaiter(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		timeout  time.Duration
+		finished bool
+	}{
+		{
+			name:     "finished",
+			timeout:  100 * time.Millisecond,
+			finished: true,
+		},
+		{
+			name:     "not finished",
+			timeout:  5 * time.Millisecond,
+			finished: false,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := WithCancel(context.Background())
+
+			go func() {
+				completed := Awaiter(ctx)
+				<-ctx.Done()
+				time.Sleep(20 * time.Millisecond)
+				completed()
+			}()
+
+			defer func() {
+				cancel()
+				time.Sleep(10 * time.Millisecond)
+				err := WaitWithTimeout(ctx, tt.timeout)
+				if tt.finished {
+					if err != nil {
+						t.Error(err)
+					}
+					return
+				}
+				if !errors.Is(err, context.DeadlineExceeded) {
+					t.Errorf("expected timeout error: %v", err)
+				}
+			}()
+		})
+	}
+}
