@@ -161,13 +161,13 @@ func CancelWithContextAndKey(ctx, ctxw context.Context, key any) error {
 
 // Awaiter returns a function that guarantees execution of the process until it is called.
 // Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
-func Awaiter(ctx context.Context) (completed func()) {
+func Awaiter(ctx context.Context) (completed func(), err error) {
 	return AwaiterWithKey(ctx, doneGroupKey)
 }
 
 // AwaiterWithKey returns a function that guarantees execution of the process until it is called.
 // Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
-func AwaiterWithKey(ctx context.Context, key any) (completed func()) {
+func AwaiterWithKey(ctx context.Context, key any) (completed func(), err error) {
 	ctxx, completed := context.WithCancel(context.Background())
 	if err := CleanupWithKey(ctx, key, func(ctxw context.Context) error {
 		for {
@@ -179,6 +179,20 @@ func AwaiterWithKey(ctx context.Context, key any) (completed func()) {
 			}
 		}
 	}); err != nil {
+		return nil, err
+	}
+	return completed, nil
+}
+
+// Awaitable returns a function that guarantees execution of the process until it is called.
+func Awaitable(ctx context.Context) (completed func()) {
+	return AwaitableWithKey(ctx, doneGroupKey)
+}
+
+// AwaitableWithKey returns a function that guarantees execution of the process until it is called.
+func AwaitableWithKey(ctx context.Context, key any) (completed func()) {
+	completed, err := AwaiterWithKey(ctx, key)
+	if err != nil {
 		panic(err)
 	}
 	return completed
