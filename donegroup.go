@@ -13,6 +13,7 @@ var doneGroupKey = struct{}{}
 
 // doneGroup is cleanup function groups per Context.
 type doneGroup struct {
+	cancel context.CancelFunc
 	// ctxw is the context used to call the cleanup functions
 	ctxw          context.Context
 	cleanupGroups []*errgroup.Group
@@ -29,11 +30,12 @@ func WithCancel(ctx context.Context) (context.Context, context.CancelFunc) {
 
 // WithCancelWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.CancelFunc) {
-	secondCtx, secondCancel := context.WithCancel(ctx)
+	dgCtx, dgCancel := context.WithCancel(ctx)
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		ctx, cancel := context.WithCancel(context.Background())
 		dg = &doneGroup{
+			cancel:  dgCancel,
 			_ctx:    ctx,
 			_cancel: cancel,
 		}
@@ -41,11 +43,12 @@ func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.C
 	eg := new(errgroup.Group)
 	dg.cleanupGroups = append(dg.cleanupGroups, eg)
 	secondDg := &doneGroup{
+		cancel:        dgCancel,
 		_ctx:          dg._ctx,
 		_cancel:       dg._cancel,
 		cleanupGroups: []*errgroup.Group{eg},
 	}
-	return context.WithValue(secondCtx, key, secondDg), secondCancel
+	return context.WithValue(dgCtx, key, secondDg), dgCancel
 }
 
 // Cleanup registers a function to be called when the context is canceled.
@@ -87,6 +90,21 @@ func WaitWithContext(ctx, ctxw context.Context) error {
 	return WaitWithContextAndKey(ctx, ctxw, doneGroupKey)
 }
 
+// Cancel cancels the context. Then calls the function registered by Cleanup.
+func Cancel(ctx context.Context) error {
+	return CancelWithKey(ctx, doneGroupKey)
+}
+
+// CancelWithTimeout cancels the context. Then calls the function registered by Cleanup with timeout.
+func CancelWithTimeout(ctx context.Context, timeout time.Duration) error {
+	return CancelWithTimeoutAndKey(ctx, timeout, doneGroupKey)
+}
+
+// CancelWithContext cancels the context. Then calls the function registered by Cleanup with context (ctxw).
+func CancelWithContext(ctx, ctxw context.Context) error {
+	return CancelWithContextAndKey(ctx, ctxw, doneGroupKey)
+}
+
 // WaitWithKey blocks until the context is canceled. Then calls the function registered by Cleanup.
 func WaitWithKey(ctx context.Context, key any) error {
 	return WaitWithContextAndKey(ctx, context.Background(), key)
@@ -116,6 +134,28 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	}
 
 	return eg.Wait()
+}
+
+// CancelWithKey cancels the context. Then calls the function registered by Cleanup.
+func CancelWithKey(ctx context.Context, key any) error {
+	return CancelWithContextAndKey(ctx, context.Background(), key)
+}
+
+// CancelWithTimeoutAndKey cancels the context. Then calls the function registered by Cleanup with timeout.
+func CancelWithTimeoutAndKey(ctx context.Context, timeout time.Duration, key any) error {
+	ctxw, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	return CancelWithContextAndKey(ctx, ctxw, key)
+}
+
+// CancelWithContextAndKey cancels the context. Then calls the function registered by Cleanup with context (ctxw).
+func CancelWithContextAndKey(ctx, ctxw context.Context, key any) error {
+	dg, ok := ctx.Value(key).(*doneGroup)
+	if !ok {
+		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
+	}
+	dg.cancel()
+	return WaitWithContextAndKey(ctx, ctxw, key)
 }
 
 // Awaiter returns a function that guarantees execution of the process until it is called.

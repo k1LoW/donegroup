@@ -184,3 +184,30 @@ go func() {
 	}
 }()
 ```
+
+### Syntax sugar for cancel() and donegroup.Wait ( [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) )
+
+If cancel() and [donegroup.Wait](https://pkg.go.dev/github.com/k1LoW/donegroup#Wait) are to be executed at the same time, [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) can be used.
+
+``` go
+ctx, cancel := donegroup.WithCancel(context.Background())
+defer func() {
+	cancel()
+	if err := donegroup.Wait(ctx); err != nil {
+		log.Fatal(err)
+	}
+}()
+```
+
+and
+
+``` go
+ctx, _ := donegroup.WithCancel(context.Background())
+defer func() {
+	if err := donegroup.Cancel(ctx); err != nil {
+		log.Fatal(err)
+	}
+}()
+```
+
+are equivalent.
