@@ -10,25 +10,16 @@ Use [donegroup.WithCancel](https://pkg.go.dev/github.com/k1LoW/donegroup#WithCan
 
 Then, it can wait for the cleanup processes associated with the context using [donegroup.Wait](https://pkg.go.dev/github.com/k1LoW/donegroup#Wait).
 
-<table>
-  <tr>
-    <th> from </th><td></td><th> to </th>
-  </tr>
-<tr>
-<td>
-
 ``` go
+// before
 ctx, cancel := context.WithCancel(context.Background())
 defer cancel()
 ```
 
-</td>
-<td>
-→
-</td>
-<td>
+↓
 
 ``` go
+// after
 ctx, cancel := donegroup.WithCancel(context.Background())
 defer func() {
 	cancel()
@@ -37,10 +28,6 @@ defer func() {
 	}
 }()
 ```
-
-</td>
-</tr>
-</table>
 
 ### Basic usage ( [donegroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) )
 
