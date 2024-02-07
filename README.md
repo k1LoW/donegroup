@@ -80,7 +80,7 @@ func main() {
 }
 ```
 
-[dongroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) is similar in usage to [testing.(*T) Cleanup](https://pkg.go.dev/testing#T.Cleanup), but the order of execution is not guaranteed.
+[dongroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) is similar in usage to [testing.T.Cleanup](https://pkg.go.dev/testing#T.Cleanup), but the order of execution is not guaranteed.
 
 ### Wait for a specified duration ( [donegroup.WaitWithTimeout](https://pkg.go.dev/github.com/k1LoW/donegroup#WaitWithTimeout) )
 
