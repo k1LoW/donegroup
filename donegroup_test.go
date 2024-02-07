@@ -348,26 +348,26 @@ func TestAwaiter(t *testing.T) {
 	}
 }
 
-func TestCancelAndWait(t *testing.T) {
+func TestCancel(t *testing.T) {
 	t.Parallel()
-	t.Run("CancelAndWait with WithCancel", func(t *testing.T) {
+	t.Run("Cancel with WithCancel", func(t *testing.T) {
 		ctx, _ := WithCancel(context.Background())
-		err := CancelAndWait(ctx)
+		err := Cancel(ctx)
 		if err != nil {
 			t.Error(err)
 		}
 	})
 
-	t.Run("CancelAndWait without WithCancel", func(t *testing.T) {
+	t.Run("Cancel without WithCancel", func(t *testing.T) {
 		ctx := context.Background()
-		err := CancelAndWait(ctx)
+		err := Cancel(ctx)
 		if err == nil {
 			t.Error("expected error, got nil")
 		}
 	})
 }
 
-func TestCancelAndWaitWithTimeout(t *testing.T) {
+func TestCancelWithTimeout(t *testing.T) {
 	t.Parallel()
 	ctx, _ := WithCancel(context.Background())
 
@@ -389,13 +389,13 @@ func TestCancelAndWaitWithTimeout(t *testing.T) {
 
 	defer func() {
 		time.Sleep(10 * time.Millisecond)
-		if err := CancelAndWaitWithTimeout(ctx, timeout); !errors.Is(err, context.DeadlineExceeded) {
+		if err := CancelWithTimeout(ctx, timeout); !errors.Is(err, context.DeadlineExceeded) {
 			t.Error("expected timeout error")
 		}
 	}()
 }
 
-func TestCancelAndWaitWithContext(t *testing.T) {
+func TestCancelWithContext(t *testing.T) {
 	t.Parallel()
 	ctx, _ := WithCancel(context.Background())
 
@@ -419,7 +419,7 @@ func TestCancelAndWaitWithContext(t *testing.T) {
 		ctxx, cancelx := context.WithTimeout(context.Background(), timeout)
 		defer cancelx()
 		time.Sleep(10 * time.Millisecond)
-		if err := CancelAndWaitWithContext(ctx, ctxx); !errors.Is(err, context.DeadlineExceeded) {
+		if err := CancelWithContext(ctx, ctxx); !errors.Is(err, context.DeadlineExceeded) {
 			t.Error("expected timeout error")
 		}
 	}()
