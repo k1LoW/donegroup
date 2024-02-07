@@ -18,6 +18,7 @@ type doneGroup struct {
 	// ctxw is the context used to call the cleanup functions
 	ctxw          context.Context
 	cleanupGroups []*errgroup.Group
+	errors        error
 	mu            sync.Mutex
 	// _ctx, _cancel is a context/cancelFunc used to set dg.ctxw
 	_ctx    context.Context
@@ -71,7 +72,12 @@ func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) er
 		dg.mu.Lock()
 		ctxw := dg.ctxw
 		dg.mu.Unlock()
-		return f(ctxw)
+		if err := f(ctxw); err != nil {
+			dg.mu.Lock()
+			dg.errors = errors.Join(dg.errors, err)
+			dg.mu.Unlock()
+		}
+		return nil
 	})
 	return nil
 }
@@ -133,8 +139,10 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	for _, g := range dg.cleanupGroups {
 		eg.Go(g.Wait)
 	}
-
-	return eg.Wait()
+	if err := eg.Wait(); err != nil {
+		return errors.Join(dg.errors, err)
+	}
+	return dg.errors
 }
 
 // CancelWithKey cancels the context. Then calls the function registered by Cleanup.
