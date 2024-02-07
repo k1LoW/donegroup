@@ -58,34 +58,27 @@ func ExampleAwaiter() {
 			log.Fatal(err)
 			return
 		}
-		for {
-			select {
-			case <-ctx.Done():
-				time.Sleep(100 * time.Millisecond)
-				fmt.Println("cleanup")
-				completed()
-				return
-			case <-time.After(10 * time.Millisecond):
-				fmt.Println("do something")
-			}
-		}
+		<-ctx.Done()
+		time.Sleep(100 * time.Millisecond)
+		fmt.Println("do something")
+		completed()
 	}()
 
 	// Main process of some kind
 	fmt.Println("main")
-	time.Sleep(35 * time.Millisecond)
+	time.Sleep(10 * time.Millisecond)
 
 	cancel()
 	if err := donegroup.Wait(ctx); err != nil {
 		log.Fatal(err)
 	}
 
+	fmt.Println("finish")
+
 	// Output:
 	// main
 	// do something
-	// do something
-	// do something
-	// cleanup
+	// finish
 }
 
 func ExampleAwaitable() {
