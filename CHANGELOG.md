@@ -1,5 +1,11 @@
 # Changelog
 
+## [v1.1.0](https://github.com/k1LoW/donegroup/compare/v1.0.0...v1.1.0) - 2024-02-07
+### New Features 🎉
+- Add donegroup.Awaiter by @k1LoW in https://github.com/k1LoW/donegroup/pull/14
+### Other Changes
+- Add test for no cleanup functions by @k1LoW in https://github.com/k1LoW/donegroup/pull/12
+
 ## [v1.0.0](https://github.com/k1LoW/donegroup/compare/v0.2.3...v1.0.0) - 2024-02-06
 ### Other Changes
 - Add example by @k1LoW in https://github.com/k1LoW/donegroup/pull/11
