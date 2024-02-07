@@ -10,6 +10,7 @@ import (
 )
 
 var doneGroupKey = struct{}{}
+var ErrNotContainDoneGroup = errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
 
 // doneGroup is cleanup function groups per Context.
 type doneGroup struct {
@@ -60,7 +61,7 @@ func Cleanup(ctx context.Context, f func(ctx context.Context) error) error {
 func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) error) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
-		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
+		return ErrNotContainDoneGroup
 	}
 
 	first := dg.cleanupGroups[0]
@@ -121,7 +122,7 @@ func WaitWithTimeoutAndKey(ctx context.Context, timeout time.Duration, key any) 
 func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
-		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
+		return ErrNotContainDoneGroup
 	}
 	dg.mu.Lock()
 	dg.ctxw = ctxw
@@ -152,7 +153,7 @@ func CancelWithTimeoutAndKey(ctx context.Context, timeout time.Duration, key any
 func CancelWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
-		return errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
+		return ErrNotContainDoneGroup
 	}
 	dg.cancel()
 	return WaitWithContextAndKey(ctx, ctxw, key)
