@@ -347,3 +347,80 @@ func TestAwaiter(t *testing.T) {
 		})
 	}
 }
+
+func TestCancelAndWait(t *testing.T) {
+	t.Parallel()
+	t.Run("CancelAndWait with WithCancel", func(t *testing.T) {
+		ctx, _ := WithCancel(context.Background())
+		err := CancelAndWait(ctx)
+		if err != nil {
+			t.Error(err)
+		}
+	})
+
+	t.Run("CancelAndWait without WithCancel", func(t *testing.T) {
+		ctx := context.Background()
+		err := CancelAndWait(ctx)
+		if err == nil {
+			t.Error("expected error, got nil")
+		}
+	})
+}
+
+func TestCancelAndWaitWithTimeout(t *testing.T) {
+	t.Parallel()
+	ctx, _ := WithCancel(context.Background())
+
+	if err := Cleanup(ctx, func(ctx context.Context) error {
+		for i := 0; i < 10; i++ {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+				time.Sleep(2 * time.Millisecond)
+			}
+		}
+		return nil
+	}); err != nil {
+		t.Error(err)
+	}
+
+	timeout := 5 * time.Millisecond
+
+	defer func() {
+		time.Sleep(10 * time.Millisecond)
+		if err := CancelAndWaitWithTimeout(ctx, timeout); !errors.Is(err, context.DeadlineExceeded) {
+			t.Error("expected timeout error")
+		}
+	}()
+}
+
+func TestCancelAndWaitWithContext(t *testing.T) {
+	t.Parallel()
+	ctx, _ := WithCancel(context.Background())
+
+	if err := Cleanup(ctx, func(ctx context.Context) error {
+		for i := 0; i < 10; i++ {
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+				time.Sleep(2 * time.Millisecond)
+			}
+		}
+		return nil
+	}); err != nil {
+		t.Error(err)
+	}
+
+	timeout := 5 * time.Millisecond
+
+	defer func() {
+		ctxx, cancelx := context.WithTimeout(context.Background(), timeout)
+		defer cancelx()
+		time.Sleep(10 * time.Millisecond)
+		if err := CancelAndWaitWithContext(ctx, ctxx); !errors.Is(err, context.DeadlineExceeded) {
+			t.Error("expected timeout error")
+		}
+	}()
+}
