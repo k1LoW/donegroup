@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.2.0](https://github.com/k1LoW/donegroup/compare/v1.1.0...v1.2.0) - 2024-02-07
+### New Features 🎉
+- Add Cancel for canceling context and waiting for cleanup functions at once. by @k1LoW in https://github.com/k1LoW/donegroup/pull/16
+
 ## [v1.1.0](https://github.com/k1LoW/donegroup/compare/v1.0.0...v1.1.0) - 2024-02-07
 ### New Features 🎉
 - Add donegroup.Awaiter by @k1LoW in https://github.com/k1LoW/donegroup/pull/14
