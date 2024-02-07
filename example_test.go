@@ -49,19 +49,51 @@ func Example() {
 	// cleanup with sleep
 }
 
-func Example_goroutine() {
+func ExampleAwaiter() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
 	go func() {
-		donegroup.Cleanup(ctx, func(_ context.Context) error {
-			time.Sleep(100 * time.Millisecond)
-			fmt.Println("cleanup")
-			return nil
-		})
-
+		completed := donegroup.Awaiter(ctx)
 		for {
 			select {
 			case <-ctx.Done():
+				time.Sleep(100 * time.Millisecond)
+				fmt.Println("cleanup")
+				completed()
+				return
+			case <-time.After(10 * time.Millisecond):
+				fmt.Println("do something")
+			}
+		}
+	}()
+
+	// Main process of some kind
+	fmt.Println("main")
+	time.Sleep(35 * time.Millisecond)
+
+	cancel()
+	if err := donegroup.Wait(ctx); err != nil {
+		log.Fatal(err)
+	}
+
+	// Output:
+	// main
+	// do something
+	// do something
+	// do something
+	// cleanup
+}
+
+func ExampleAwaiter_defer() {
+	ctx, cancel := donegroup.WithCancel(context.Background())
+
+	go func() {
+		defer donegroup.Awaiter(ctx)()
+		for {
+			select {
+			case <-ctx.Done():
+				time.Sleep(100 * time.Millisecond)
+				fmt.Println("cleanup")
 				return
 			case <-time.After(10 * time.Millisecond):
 				fmt.Println("do something")

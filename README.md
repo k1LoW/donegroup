@@ -10,6 +10,8 @@ Use [donegroup.WithCancel](https://pkg.go.dev/github.com/k1LoW/donegroup#WithCan
 
 Then, it can wait for the cleanup processes associated with the context using [donegroup.Wait](https://pkg.go.dev/github.com/k1LoW/donegroup#Wait).
 
+### Basic usage ( `donegroup.Cleanup` )
+
 ```go
 package main
 
@@ -61,7 +63,7 @@ func main() {
 
 [dongroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) is similar in usage to [testing.(*T) Cleanup](https://pkg.go.dev/testing#T.Cleanup), but the order of execution is not guaranteed.
 
-### Wait for a specified duration
+### Wait for a specified duration ( `donegroup.WaitWithTimeout` )
 
 Using [donegroup.WaitWithTimeout](https://pkg.go.dev/github.com/k1LoW/donegroup#WaitWithTimeout), it is possible to set a timeout for the cleanup processes.
 
@@ -107,3 +109,59 @@ fmt.Println("main finish")
 // context deadline exceeded
 ```
 
+### `donegroup.Awaiter`
+
+In addition to using donegroup.Cleanup to register a cleanup function after context cancellation, it is possible to use donegroup.Awaiter to make the execution of an arbitrary process wait after the context has been canceled.
+
+``` go
+ctx, cancel := donegroup.WithCancel(context.Background())
+
+go func() {
+	completed := donegroup.Awaiter(ctx)
+	for {
+		select {
+		case <-ctx.Done():
+			time.Sleep(100 * time.Millisecond)
+			fmt.Println("cleanup")
+			completed()
+			return
+		case <-time.After(10 * time.Millisecond):
+			fmt.Println("do something")
+		}
+	}
+}()
+
+// Main process of some kind
+fmt.Println("main")
+time.Sleep(35 * time.Millisecond)
+
+cancel()
+if err := donegroup.Wait(ctx); err != nil {
+	log.Fatal(err)
+}
+
+// Output:
+// main
+// do something
+// do something
+// do something
+// cleanup
+```
+
+It is also possible to guarantee the execution of a function block using `defer`.
+
+``` go
+go func() {
+	defer donegroup.Awaiter(ctx)()
+	for {
+		select {
+		case <-ctx.Done():
+			time.Sleep(100 * time.Millisecond)
+			fmt.Println("cleanup")
+			return
+		case <-time.After(10 * time.Millisecond):
+			fmt.Println("do something")
+		}
+	}
+}()
+```
