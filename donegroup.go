@@ -11,7 +11,7 @@ import (
 
 var doneGroupKey = struct{}{}
 
-// doneGroup is cleanup function groups per Context
+// doneGroup is cleanup function groups per Context.
 type doneGroup struct {
 	// ctxw is the context used to call the cleanup functions
 	ctxw          context.Context
@@ -128,7 +128,7 @@ func Awaiter(ctx context.Context) (completed func()) {
 // Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
 func AwaiterWithKey(ctx context.Context, key any) (completed func()) {
 	ctxx, completed := context.WithCancel(context.Background())
-	CleanupWithKey(ctx, key, func(ctxw context.Context) error {
+	if err := CleanupWithKey(ctx, key, func(ctxw context.Context) error {
 		for {
 			select {
 			case <-ctxw.Done():
@@ -137,6 +137,8 @@ func AwaiterWithKey(ctx context.Context, key any) (completed func()) {
 				return nil
 			}
 		}
-	})
+	}); err != nil {
+		panic(err)
+	}
 	return completed
 }
