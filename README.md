@@ -141,7 +141,7 @@ go func() {
 		log.Fatal(err)
 		return
 	}
-    <-ctx.Done()
+	<-ctx.Done()
 	time.Sleep(100 * time.Millisecond)
 	fmt.Println("do something")
 	completed()
