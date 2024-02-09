@@ -126,14 +126,16 @@ func TestMultiCleanup(t *testing.T) {
 	}()
 }
 
-func TestNested(t *testing.T) {
+func TestNestedWithCancel(t *testing.T) {
 	t.Parallel()
 	firstCtx, firstCancel := WithCancel(context.Background())
 	secondCtx, secondCancel := WithCancel(firstCtx)
+	thirdCtx, thirdCancel := context.WithCancel(secondCtx) // context.WithCancel
 
 	mu := sync.Mutex{}
 	firstCleanup := 0
 	secondCleanup := 0
+	thirdCleanup := 0
 
 	for i := 0; i < 10; i++ {
 		if err := Cleanup(firstCtx, func(_ context.Context) error {
@@ -159,13 +161,42 @@ func TestNested(t *testing.T) {
 		}
 	}
 
+	for i := 0; i < 3; i++ {
+		if err := Cleanup(thirdCtx, func(_ context.Context) error {
+			time.Sleep(10 * time.Millisecond)
+			mu.Lock()
+			defer mu.Unlock()
+			thirdCleanup += 1
+			return nil
+		}); err != nil {
+			t.Error(err)
+		}
+	}
+
 	defer func() {
+		thirdCancel()
+		<-thirdCtx.Done()
+
+		if firstCleanup != 0 {
+			t.Error("cleanup function for first called")
+		}
+		if secondCleanup != 0 {
+			t.Error("cleanup function for second called")
+		}
+		if thirdCleanup != 0 {
+			t.Error("cleanup function for third called")
+		}
+
 		secondCancel()
+		<-secondCtx.Done()
 
 		if err := Wait(secondCtx); err != nil {
 			t.Error(err)
 		}
 
+		if thirdCleanup != 3 {
+			t.Error("cleanup function for third not called")
+		}
 		if secondCleanup != 5 {
 			t.Error("cleanup function for second not called")
 		}
@@ -174,6 +205,7 @@ func TestNested(t *testing.T) {
 		}
 
 		firstCancel()
+		<-firstCtx.Done()
 
 		if err := Wait(firstCtx); err != nil {
 			t.Error(err)
