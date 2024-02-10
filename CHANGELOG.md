@@ -1,5 +1,7 @@
 # Changelog
 
+## [v1.4.1](https://github.com/k1LoW/donegroup/compare/v1.4.0...v1.4.1) - 2024-02-09
+
 ## [v1.4.0](https://github.com/k1LoW/donegroup/compare/v1.3.0...v1.4.0) - 2024-02-07
 ### Breaking Changes 🛠
 - Always execute all cleanup functions. by @k1LoW in https://github.com/k1LoW/donegroup/pull/21
