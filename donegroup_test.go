@@ -545,12 +545,12 @@ func TestGo(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := WithCancel(context.Background())
 
-			finished := false
+			var finished int32
 
 			Go(ctx, func() error {
 				<-ctx.Done()
 				time.Sleep(100 * time.Millisecond)
-				finished = true
+				atomic.AddInt32(&finished, 1)
 				return nil
 			})
 
@@ -558,7 +558,7 @@ func TestGo(t *testing.T) {
 				cancel()
 				time.Sleep(10 * time.Millisecond)
 				err := WaitWithTimeout(ctx, tt.timeout)
-				if tt.finished != finished {
+				if tt.finished != (atomic.LoadInt32(&finished) > 0) {
 					t.Errorf("expected finished: %v, got: %v", tt.finished, finished)
 				}
 				if tt.finished {
