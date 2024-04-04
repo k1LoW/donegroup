@@ -174,7 +174,7 @@ go func() {
 }()
 ```
 
-### [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go)
+### Syntax sugar for `go func()` and donegroup.Awaiter ( [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go) )
 
 [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go) can execute arbitrary process asynchronously while still waiting for it to finish, similar to [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter).
 
@@ -186,7 +186,9 @@ donegroup.Go(func() error {
 }()
 ```
 
-### Syntax sugar for cancel() and donegroup.Wait ( [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) )
+Also, with [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go), the error can be received via [donegroup.Wait](https://pkg.go.dev/github.com/k1LoW/donegroup#Wait).
+
+### Syntax sugar for `cancel()` and donegroup.Wait ( [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) )
 
 If cancel() and [donegroup.Wait](https://pkg.go.dev/github.com/k1LoW/donegroup#Wait) are to be executed at the same time, [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) can be used.
 
