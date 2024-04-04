@@ -355,6 +355,8 @@ func TestAwaiter(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := WithCancel(context.Background())
 
+			finished := false
+
 			go func() {
 				completed, err := Awaiter(ctx)
 				if err != nil {
@@ -362,6 +364,7 @@ func TestAwaiter(t *testing.T) {
 				}
 				<-ctx.Done()
 				time.Sleep(20 * time.Millisecond)
+				finished = true
 				completed()
 			}()
 
@@ -369,6 +372,9 @@ func TestAwaiter(t *testing.T) {
 				cancel()
 				time.Sleep(10 * time.Millisecond)
 				err := WaitWithTimeout(ctx, tt.timeout)
+				if tt.finished != finished {
+					t.Errorf("expected finished: %v, got: %v", tt.finished, finished)
+				}
 				if tt.finished {
 					if err != nil {
 						t.Error(err)
@@ -407,16 +413,22 @@ func TestAwaitable(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := WithCancel(context.Background())
 
+			finished := false
+
 			go func() {
 				defer Awaitable(ctx)()
 				<-ctx.Done()
 				time.Sleep(20 * time.Millisecond)
+				finished = true
 			}()
 
 			defer func() {
 				cancel()
 				time.Sleep(10 * time.Millisecond)
 				err := WaitWithTimeout(ctx, tt.timeout)
+				if tt.finished != finished {
+					t.Errorf("expected finished: %v, got: %v", tt.finished, finished)
+				}
 				if tt.finished {
 					if err != nil {
 						t.Error(err)
@@ -504,6 +516,81 @@ func TestCancelWithContext(t *testing.T) {
 		time.Sleep(10 * time.Millisecond)
 		if err := CancelWithContext(ctx, ctxx); !errors.Is(err, context.DeadlineExceeded) {
 			t.Error("expected timeout error")
+		}
+	}()
+}
+
+func TestGo(t *testing.T) {
+	t.Parallel()
+	tests := []struct {
+		name     string
+		timeout  time.Duration
+		finished bool
+	}{
+		{
+			name:     "finished",
+			timeout:  200 * time.Millisecond,
+			finished: true,
+		},
+		{
+			name:     "not finished",
+			timeout:  5 * time.Millisecond,
+			finished: false,
+		},
+	}
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctx, cancel := WithCancel(context.Background())
+
+			finished := false
+
+			Go(ctx, func() error {
+				<-ctx.Done()
+				time.Sleep(100 * time.Millisecond)
+				finished = true
+				return nil
+			})
+
+			defer func() {
+				cancel()
+				time.Sleep(10 * time.Millisecond)
+				err := WaitWithTimeout(ctx, tt.timeout)
+				if tt.finished != finished {
+					t.Errorf("expected finished: %v, got: %v", tt.finished, finished)
+				}
+				if tt.finished {
+					if err != nil {
+						t.Error(err)
+					}
+					return
+				}
+				if !errors.Is(err, context.DeadlineExceeded) {
+					t.Errorf("expected timeout error: %v", err)
+				}
+			}()
+		})
+	}
+}
+
+func TestGoWithError(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := WithCancel(context.Background())
+
+	var errTest = errors.New("test error")
+
+	Go(ctx, func() error {
+		time.Sleep(10 * time.Millisecond)
+		return errTest
+	})
+
+	defer func() {
+		cancel()
+
+		err := Wait(ctx)
+		if !errors.Is(err, errTest) {
+			t.Errorf("got %v, want %v", err, errTest)
 		}
 	}()
 }

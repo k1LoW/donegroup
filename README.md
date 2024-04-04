@@ -2,7 +2,7 @@
 
 `donegroup` is a package that provides a graceful cleanup transaction to context.Context when the context is canceled ( **done** ).
 
-> errgroup.Group after <-ctx.Done() = donegroup
+> errgroup.Group + <-ctx.Done() = donegroup
 
 ## Usage
 
@@ -130,7 +130,7 @@ fmt.Println("main finish")
 
 ### [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter)
 
-In addition to using [donegroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) to register a cleanup function after context cancellation, it is possible to use [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter) to make the execution of an arbitrary process wait after the context has been canceled.
+In addition to using [donegroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) to register a cleanup function after context cancellation, it is possible to use [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter) to make the execution of an arbitrary process wait.
 
 ``` go
 ctx, cancel := donegroup.WithCancel(context.Background())
@@ -141,8 +141,7 @@ go func() {
 		log.Fatal(err)
 		return
 	}
-	<-ctx.Done()
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	fmt.Println("do something")
 	completed()
 }()
@@ -169,11 +168,21 @@ It is also possible to guarantee the execution of a function block using `defer 
 ``` go
 go func() {
 	defer donegroup.Awaitable(ctx)()
-	<-ctx.Done()
-	time.Sleep(100 * time.Millisecond)
+	time.Sleep(1000 * time.Millisecond)
 	fmt.Println("do something")
 	completed()
-	}
+}()
+```
+
+### [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go)
+
+[donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go) can also make an arbitrary process wait, similar to [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter).
+
+``` go
+donegroup.Go(func() error {
+	time.Sleep(1000 * time.Millisecond)
+	fmt.Println("do something")
+	return nil
 }()
 ```
 
@@ -203,3 +212,4 @@ defer func() {
 ```
 
 are equivalent.
+
