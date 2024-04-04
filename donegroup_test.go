@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -355,7 +356,7 @@ func TestAwaiter(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := WithCancel(context.Background())
 
-			finished := false
+			var finished int32
 
 			go func() {
 				completed, err := Awaiter(ctx)
@@ -364,7 +365,7 @@ func TestAwaiter(t *testing.T) {
 				}
 				<-ctx.Done()
 				time.Sleep(20 * time.Millisecond)
-				finished = true
+				atomic.AddInt32(&finished, 1)
 				completed()
 			}()
 
@@ -372,7 +373,7 @@ func TestAwaiter(t *testing.T) {
 				cancel()
 				time.Sleep(10 * time.Millisecond)
 				err := WaitWithTimeout(ctx, tt.timeout)
-				if tt.finished != finished {
+				if tt.finished != (atomic.LoadInt32(&finished) > 0) {
 					t.Errorf("expected finished: %v, got: %v", tt.finished, finished)
 				}
 				if tt.finished {
@@ -413,20 +414,20 @@ func TestAwaitable(t *testing.T) {
 			t.Parallel()
 			ctx, cancel := WithCancel(context.Background())
 
-			finished := false
+			var finished int32
 
 			go func() {
 				defer Awaitable(ctx)()
 				<-ctx.Done()
 				time.Sleep(20 * time.Millisecond)
-				finished = true
+				atomic.AddInt32(&finished, 1)
 			}()
 
 			defer func() {
 				cancel()
 				time.Sleep(10 * time.Millisecond)
 				err := WaitWithTimeout(ctx, tt.timeout)
-				if tt.finished != finished {
+				if tt.finished != (atomic.LoadInt32(&finished) > 0) {
 					t.Errorf("expected finished: %v, got: %v", tt.finished, finished)
 				}
 				if tt.finished {
