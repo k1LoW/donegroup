@@ -3,10 +3,10 @@ default: test
 ci: test race
 
 test:
-	go test ./... -coverprofile=coverage.out -covermode=count
+	go test ./... -coverprofile=coverage.out -covermode=count -count=1
 
 race:
-	go test ./... -race
+	go test ./... -race -count=1
 
 lint:
 	golangci-lint run ./...
