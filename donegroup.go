@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"sync"
-	"sync/atomic"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -224,35 +223,16 @@ func GoWithKey(ctx context.Context, key any, f func() error) {
 	if !ok {
 		panic(ErrNotContainDoneGroup)
 	}
-
-	first := dg.cleanupGroups[0]
-	first.Go(func() error {
-		var finished int32
-		go func() {
-			if err := f(); err != nil {
-				dg.mu.Lock()
-				dg.errors = errors.Join(dg.errors, err)
-				dg.mu.Unlock()
-			}
-			atomic.AddInt32(&finished, 1)
-		}()
-		<-ctx.Done()
-		for {
-			if atomic.LoadInt32(&finished) > 0 {
-				break
-			}
+	completed, err := AwaiterWithKey(ctx, key)
+	if err != nil {
+		panic(err)
+	}
+	go func() {
+		if err := f(); err != nil {
 			dg.mu.Lock()
-			if dg.ctxw == nil {
-				dg.mu.Unlock()
-				continue
-			}
+			dg.errors = errors.Join(dg.errors, err)
 			dg.mu.Unlock()
-			select {
-			case <-dg.ctxw.Done():
-				return dg.ctxw.Err()
-			default:
-			}
 		}
-		return nil
-	})
+		completed()
+	}()
 }
