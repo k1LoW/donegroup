@@ -176,7 +176,7 @@ go func() {
 
 ### [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go)
 
-[donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go) can also make an arbitrary process wait, similar to [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter).
+[donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go) can execute arbitrary process asynchronously while still waiting for it to finish, similar to [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter).
 
 ``` go
 donegroup.Go(func() error {
