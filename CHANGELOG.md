@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.5.0](https://github.com/k1LoW/donegroup/compare/v1.4.0...v1.5.0) - 2024-04-04
+### New Features 🎉
+- Add `donegroup.Go` by @k1LoW in https://github.com/k1LoW/donegroup/pull/23
+
 ## [v1.4.0](https://github.com/k1LoW/donegroup/compare/v1.3.0...v1.4.0) - 2024-02-07
 ### Breaking Changes 🛠
 - Always execute all cleanup functions. by @k1LoW in https://github.com/k1LoW/donegroup/pull/21
