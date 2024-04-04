@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -176,7 +177,7 @@ func Awaiter(ctx context.Context) (completed func(), err error) {
 // AwaiterWithKey returns a function that guarantees execution of the process until it is called.
 // Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
 func AwaiterWithKey(ctx context.Context, key any) (completed func(), err error) {
-	ctxx, completed := context.WithCancel(context.Background())
+	ctxx, completed := context.WithCancel(context.Background()) //nolint:govet
 	if err := CleanupWithKey(ctx, key, func(ctxw context.Context) error {
 		for {
 			select {
@@ -187,7 +188,7 @@ func AwaiterWithKey(ctx context.Context, key any) (completed func(), err error) 
 			}
 		}
 	}); err != nil {
-		return nil, err
+		return nil, err //nolint:govet
 	}
 	return completed, nil
 }
@@ -206,4 +207,52 @@ func AwaitableWithKey(ctx context.Context, key any) (completed func()) {
 		panic(err)
 	}
 	return completed
+}
+
+// Go calls the function now asynchronously.
+// If an error occurs, it is stored in the doneGroup.
+// Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
+func Go(ctx context.Context, f func() error) {
+	GoWithKey(ctx, doneGroupKey, f)
+}
+
+// GoWithKey calls the function now asynchronously.
+// If an error occurs, it is stored in the doneGroup.
+// Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
+func GoWithKey(ctx context.Context, key any, f func() error) {
+	dg, ok := ctx.Value(key).(*doneGroup)
+	if !ok {
+		panic(ErrNotContainDoneGroup)
+	}
+
+	first := dg.cleanupGroups[0]
+	first.Go(func() error {
+		var finished int32
+		go func() {
+			if err := f(); err != nil {
+				dg.mu.Lock()
+				dg.errors = errors.Join(dg.errors, err)
+				dg.mu.Unlock()
+			}
+			atomic.AddInt32(&finished, 1)
+		}()
+		<-ctx.Done()
+		for {
+			if atomic.LoadInt32(&finished) > 0 {
+				break
+			}
+			dg.mu.Lock()
+			if dg.ctxw == nil {
+				dg.mu.Unlock()
+				continue
+			}
+			dg.mu.Unlock()
+			select {
+			case <-dg.ctxw.Done():
+				return dg.ctxw.Err()
+			default:
+			}
+		}
+		return nil
+	})
 }
