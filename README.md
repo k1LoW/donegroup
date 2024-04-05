@@ -31,6 +31,28 @@ defer func() {
 
 ### Basic usage ( [donegroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) )
 
+``` mermaid
+gantt
+    dateFormat  mm
+    axisFormat  
+
+    section main
+        donegroup.WithCancel :milestone, m1, 00, 0m
+        cancel context using cancel() : milestone, m2, 03, 0m
+        donegroup.Wait :milestone, m3, 04, 0m
+        waiting for all registered funcs to finish     :b, 04, 2m
+
+    section cleanup func1
+        register func1 using donegroup.Cleanup :milestone, m1, 01, 0m
+        waiting for context cancellation   :a, 01, 2m
+        executing func1  :active, b, 03, 3m
+
+    section cleanup func2
+        register func2 using donegroup.Cleanup :milestone, m3, 02, 0m
+        waiting for context cancellation  :a, 02, 1m
+        executing func2 :active, b, 03, 2m
+```
+
 ```go
 package main
 
@@ -46,18 +68,18 @@ import (
 func main() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
-	// Cleanup process 1 of some kind
+	// Cleanup process func1 of some kind
 	if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
-		fmt.Println("cleanup 1")
+		fmt.Println("cleanup func1")
 		return nil
 	}); err != nil {
 		log.Fatal(err)
 	}
 
-	// Cleanup process 2 of some kind
+	// Cleanup process func2 of some kind
 	if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
 		time.Sleep(1 * time.Second)
-		fmt.Println("cleanup 2")
+		fmt.Println("cleanup func2")
 		return nil
 	}); err != nil {
 		log.Fatal(err)
@@ -75,8 +97,8 @@ func main() {
 
 	// Output:
 	// main finish
-	// cleanup 1
-	// cleanup 2
+	// cleanup func1
+	// cleanup func2
 }
 ```
 
@@ -87,6 +109,24 @@ func main() {
 Using [donegroup.WaitWithTimeout](https://pkg.go.dev/github.com/k1LoW/donegroup#WaitWithTimeout), it is possible to set a timeout for the cleanup processes.
 
 Note that each cleanup process must handle its own context argument.
+
+``` mermaid
+gantt
+    dateFormat  mm
+    axisFormat  
+
+    section main
+        donegroup.WithCancel :milestone, m1, 00, 0m
+        cancel context using cancel() : milestone, m2, 03, 0m
+        donegroup.WaitWithTimeout :milestone, m3, 04, 0m
+        waiting for all registered funcs to finish     :b, 04, 1m
+        timeout :milestone, m4, 05, 0m
+
+    section cleanup func
+        register func using donegroup.Cleanup :milestone, m1, 01, 0m
+        waiting for context cancellation   :a, 01, 2m
+        executing func  :active, b, 03, 3m
+```
 
 ```go
 ctx, cancel := WithCancel(context.Background())
@@ -131,6 +171,23 @@ fmt.Println("main finish")
 ### [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter)
 
 In addition to using [donegroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) to register a cleanup function after context cancellation, it is possible to use [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter) to make the execution of an arbitrary process wait.
+
+``` mermaid
+gantt
+    dateFormat  mm
+    axisFormat  
+
+    section main
+        donegroup.WithCancel :milestone, m1, 00, 0m
+        cancel context using cancel() : milestone, m2, 03, 0m
+        donegroup.Wait :milestone, m3, 04, 0m
+        waiting for all registered funcs to finish     :b, 04, 1m
+
+    section func on goroutine
+        executing go func  :active, b, 01, 4m
+        donegroup.Awaiter :milestone, m3, 01, 0m
+        completed() :milestone, m3, 05, 0m
+```
 
 ``` go
 ctx, cancel := donegroup.WithCancel(context.Background())
@@ -178,6 +235,22 @@ go func() {
 
 [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go) can execute arbitrary process asynchronously while still waiting for it to finish, similar to [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter).
 
+``` mermaid
+gantt
+    dateFormat  mm
+    axisFormat  
+
+    section main
+        donegroup.WithCancel :milestone, m1, 00, 0m
+        cancel context using cancel() : milestone, m2, 03, 0m
+        donegroup.Wait :milestone, m3, 04, 0m
+        waiting for all registered funcs to finish     :b, 04, 1m
+
+    section func on donegroup.Go
+        register and execute func using donegroup.Go :milestone, m3, 01, 0m
+        executing func  :active, b, 01, 4m
+```
+
 ``` go
 donegroup.Go(func() error {
 	time.Sleep(1000 * time.Millisecond)
@@ -214,4 +287,3 @@ defer func() {
 ```
 
 are equivalent.
-
