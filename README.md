@@ -252,7 +252,7 @@ gantt
 ```
 
 ``` go
-donegroup.Go(func() error {
+donegroup.Go(ctx, func() error {
 	time.Sleep(1000 * time.Millisecond)
 	fmt.Println("do something")
 	return nil
