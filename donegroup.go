@@ -14,7 +14,7 @@ var ErrNotContainDoneGroup = errors.New("donegroup: context does not contain a d
 
 // doneGroup is cleanup function groups per Context.
 type doneGroup struct {
-	cancel context.CancelFunc
+	cancel context.CancelCauseFunc
 	// ctxw is the context used to call the cleanup functions
 	ctxw          context.Context
 	cleanupGroups []*errgroup.Group
@@ -30,9 +30,20 @@ func WithCancel(ctx context.Context) (context.Context, context.CancelFunc) {
 	return WithCancelWithKey(ctx, doneGroupKey)
 }
 
+// WithCancelCause returns a copy of parent with a new Done channel and a doneGroup.
+func WithCancelCause(ctx context.Context) (context.Context, context.CancelCauseFunc) {
+	return WithCancelCauseWithKey(ctx, doneGroupKey)
+}
+
 // WithCancelWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.CancelFunc) {
-	dgCtx, dgCancel := context.WithCancel(ctx)
+	ctx, fn := WithCancelCauseWithKey(ctx, key)
+	return ctx, func() { fn(nil) }
+}
+
+// WithCancelCauseWithKey returns a copy of parent with a new Done channel and a doneGroup.
+func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, context.CancelCauseFunc) {
+	dgCtx, dgCancel := context.WithCancelCause(ctx)
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -163,7 +174,7 @@ func CancelWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	if !ok {
 		return ErrNotContainDoneGroup
 	}
-	dg.cancel()
+	dg.cancel(nil)
 	return WaitWithContextAndKey(ctx, ctxw, key)
 }
 
