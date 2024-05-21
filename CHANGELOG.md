@@ -1,5 +1,13 @@
 # Changelog
 
+## [v1.6.0](https://github.com/k1LoW/donegroup/compare/v1.5.1...v1.6.0) - 2024-05-21
+### New Features 🎉
+- Add WithCancelCause by @k1LoW in https://github.com/k1LoW/donegroup/pull/27
+- Add `WithDeadline` and `WithTimeout` by @k1LoW in https://github.com/k1LoW/donegroup/pull/30
+### Other Changes
+- chore(deps): bump golang.org/x/sync from 0.6.0 to 0.7.0 in the dependencies group by @dependabot in https://github.com/k1LoW/donegroup/pull/29
+- chore(deps): bump actions/setup-go from 4 to 5 in the dependencies group by @dependabot in https://github.com/k1LoW/donegroup/pull/28
+
 ## [v1.5.1](https://github.com/k1LoW/donegroup/compare/v1.5.0...v1.5.1) - 2024-04-04
 
 ## [v1.5.0](https://github.com/k1LoW/donegroup/compare/v1.4.0...v1.5.0) - 2024-04-04
