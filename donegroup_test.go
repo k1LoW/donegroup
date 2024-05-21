@@ -631,6 +631,35 @@ func TestWithCancelCause(t *testing.T) {
 	cleanup = false
 }
 
+func TestWithDeadline(t *testing.T) {
+	t.Parallel()
+	ctx, _ := WithDeadline(context.Background(), time.Now().Add(5*time.Millisecond))
+
+	cleanup := false
+
+	if err := Cleanup(ctx, func(_ context.Context) error {
+		time.Sleep(10 * time.Millisecond)
+		cleanup = true
+		return nil
+	}); err != nil {
+		t.Error(err)
+	}
+
+	cleanup = false
+
+	if err := Wait(ctx); err != nil {
+		t.Error(err)
+	}
+
+	if !cleanup {
+		t.Error("cleanup function not called")
+	}
+
+	if !errors.Is(context.Cause(ctx), context.DeadlineExceeded) {
+		t.Errorf("got %v, want %v", context.Cause(ctx), context.DeadlineExceeded)
+	}
+}
+
 func TestWithTimeout(t *testing.T) {
 	t.Parallel()
 	ctx, _ := WithTimeout(context.Background(), 5*time.Millisecond)
