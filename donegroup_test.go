@@ -56,8 +56,8 @@ func TestCleanup(t *testing.T) {
 		err := Cleanup(ctx, func(_ context.Context) error {
 			return nil
 		})
-		if err == nil {
-			t.Error("expected error, got nil")
+		if !errors.Is(err, ErrNotContainDoneGroup) {
+			t.Errorf("expected ErrNotContainDoneGroup, got %v", err)
 		}
 	})
 }
@@ -76,8 +76,8 @@ func TestWait(t *testing.T) {
 	t.Run("Wait without WithCancel", func(t *testing.T) {
 		ctx := context.Background()
 		err := Wait(ctx)
-		if err == nil {
-			t.Error("expected error, got nil")
+		if !errors.Is(err, ErrNotContainDoneGroup) {
+			t.Errorf("expected ErrNotContainDoneGroup, got %v", err)
 		}
 	})
 }
@@ -594,4 +594,39 @@ func TestGoWithError(t *testing.T) {
 			t.Errorf("got %v, want %v", err, errTest)
 		}
 	}()
+}
+
+func TestWithCancelCause(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := WithCancelCause(context.Background())
+
+	cleanup := false
+
+	if err := Cleanup(ctx, func(_ context.Context) error {
+		time.Sleep(10 * time.Millisecond)
+		cleanup = true
+		return nil
+	}); err != nil {
+		t.Error(err)
+	}
+
+	var errTest = errors.New("test error")
+
+	defer func() {
+		cancel(errTest)
+
+		if err := Wait(ctx); err != nil {
+			t.Error(err)
+		}
+
+		if !cleanup {
+			t.Error("cleanup function not called")
+		}
+
+		if !errors.Is(context.Cause(ctx), errTest) {
+			t.Errorf("got %v, want %v", context.Cause(ctx), errTest)
+		}
+	}()
+
+	cleanup = false
 }
