@@ -30,9 +30,31 @@ func WithCancel(ctx context.Context) (context.Context, context.CancelFunc) {
 	return WithCancelWithKey(ctx, doneGroupKey)
 }
 
+// WithDeadline returns a copy of parent with a new Done channel and a doneGroup.
+// If the deadline is exceeded, the cause is set to context.DeadlineExceeded.
+func WithDeadline(ctx context.Context, d time.Time) (context.Context, context.CancelFunc) {
+	return WithDeadlineCause(ctx, d, nil)
+}
+
+// WithTimeout returns a copy of parent with a new Done channel and a doneGroup.
+// If the timeout is exceeded, the cause is set to context.DeadlineExceeded.
+func WithTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+	return WithTimeoutCause(ctx, timeout, nil)
+}
+
 // WithCancelCause returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancelCause(ctx context.Context) (context.Context, context.CancelCauseFunc) {
 	return WithCancelCauseWithKey(ctx, doneGroupKey)
+}
+
+// WithDeadlineCause returns a copy of parent with a new Done channel and a doneGroup.
+func WithDeadlineCause(ctx context.Context, d time.Time, cause error) (context.Context, context.CancelFunc) {
+	return WithDeadlineCauseWithKey(ctx, d, cause, doneGroupKey)
+}
+
+// WithTimeoutCause returns a copy of parent with a new Done channel and a doneGroup.
+func WithTimeoutCause(ctx context.Context, timeout time.Duration, cause error) (context.Context, context.CancelFunc) {
+	return WithTimeoutCauseWithKey(ctx, timeout, cause, doneGroupKey)
 }
 
 // WithCancelWithKey returns a copy of parent with a new Done channel and a doneGroup.
@@ -41,14 +63,24 @@ func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.C
 	return ctx, func() { fn(nil) }
 }
 
+// WithDeadlineWithKey returns a copy of parent with a new Done channel and a doneGroup.
+func WithDeadlineWithKey(ctx context.Context, d time.Time, key any) (context.Context, context.CancelFunc) {
+	return WithDeadlineCauseWithKey(ctx, d, nil, key)
+}
+
+// WithTimeoutWithKey returns a copy of parent with a new Done channel and a doneGroup.
+func WithTimeoutWithKey(ctx context.Context, timeout time.Duration, key any) (context.Context, context.CancelFunc) {
+	return WithTimeoutCauseWithKey(ctx, timeout, nil, key)
+}
+
 // WithCancelCauseWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, context.CancelCauseFunc) {
-	dgCtx, dgCancel := context.WithCancelCause(ctx)
+	dgCtx, dgCancelCause := context.WithCancelCause(ctx)
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		ctx, cancel := context.WithCancel(context.Background())
 		dg = &doneGroup{
-			cancel:  dgCancel,
+			cancel:  dgCancelCause,
 			_ctx:    ctx,
 			_cancel: cancel,
 		}
@@ -56,12 +88,40 @@ func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, cont
 	eg := new(errgroup.Group)
 	dg.cleanupGroups = append(dg.cleanupGroups, eg)
 	secondDg := &doneGroup{
-		cancel:        dgCancel,
+		cancel:        dgCancelCause,
+		_ctx:          dg._ctx,
+		_cancel:       dg._cancel,
+		cleanupGroups: []*errgroup.Group{eg},
+	}
+	return context.WithValue(dgCtx, key, secondDg), dgCancelCause
+}
+
+// WithDeadlineCauseWithKey returns a copy of parent with a new Done channel and a doneGroup.
+func WithDeadlineCauseWithKey(ctx context.Context, d time.Time, cause error, key any) (context.Context, context.CancelFunc) {
+	dgCtx, dgCancel := context.WithDeadlineCause(ctx, d, cause)
+	dg, ok := ctx.Value(key).(*doneGroup)
+	if !ok {
+		ctx, cancel := context.WithCancel(context.Background())
+		dg = &doneGroup{
+			cancel:  func(_ error) { dgCancel() },
+			_ctx:    ctx,
+			_cancel: cancel,
+		}
+	}
+	eg := new(errgroup.Group)
+	dg.cleanupGroups = append(dg.cleanupGroups, eg)
+	secondDg := &doneGroup{
+		cancel:        func(_ error) { dgCancel() },
 		_ctx:          dg._ctx,
 		_cancel:       dg._cancel,
 		cleanupGroups: []*errgroup.Group{eg},
 	}
 	return context.WithValue(dgCtx, key, secondDg), dgCancel
+}
+
+// WithTimeoutCauseWithKey returns a copy of parent with a new Done channel and a doneGroup.
+func WithTimeoutCauseWithKey(ctx context.Context, timeout time.Duration, cause error, key any) (context.Context, context.CancelFunc) {
+	return WithDeadlineCauseWithKey(ctx, time.Now().Add(timeout), cause, key)
 }
 
 // Cleanup registers a function to be called when the context is canceled.
