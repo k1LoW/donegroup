@@ -10,7 +10,7 @@ import (
 )
 
 var doneGroupKey = struct{}{}
-var ErrNotContainDoneGroup = errors.New("donegroup: context does not contain a doneGroup. Use donegroup.WithCancel to create a context with a doneGroup")
+var ErrNotContainDoneGroup = errors.New("donegroup: context does not contain a doneGroup. Use donegroup.With* to create a context with a doneGroup")
 
 // doneGroup is cleanup function groups per Context.
 type doneGroup struct {
