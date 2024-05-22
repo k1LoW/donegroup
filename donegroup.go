@@ -14,7 +14,7 @@ var ErrNotContainDoneGroup = errors.New("donegroup: context does not contain a d
 
 // doneGroup is cleanup function groups per Context.
 type doneGroup struct {
-	cancel context.CancelCauseFunc
+	cancel context.CancelFunc
 	// ctxw is the context used to call the cleanup functions
 	ctxw          context.Context
 	cleanupGroups []*errgroup.Group
@@ -80,7 +80,7 @@ func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, cont
 	if !ok {
 		ctx, cancel := context.WithCancel(context.Background())
 		dg = &doneGroup{
-			cancel:  dgCancelCause,
+			cancel:  func() { dgCancelCause(nil) },
 			_ctx:    ctx,
 			_cancel: cancel,
 		}
@@ -88,7 +88,7 @@ func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, cont
 	eg := new(errgroup.Group)
 	dg.cleanupGroups = append(dg.cleanupGroups, eg)
 	secondDg := &doneGroup{
-		cancel:        dgCancelCause,
+		cancel:        func() { dgCancelCause(nil) },
 		_ctx:          dg._ctx,
 		_cancel:       dg._cancel,
 		cleanupGroups: []*errgroup.Group{eg},
@@ -103,7 +103,7 @@ func WithDeadlineCauseWithKey(ctx context.Context, d time.Time, cause error, key
 	if !ok {
 		ctx, cancel := context.WithCancel(context.Background())
 		dg = &doneGroup{
-			cancel:  func(_ error) { dgCancel() },
+			cancel:  dgCancel,
 			_ctx:    ctx,
 			_cancel: cancel,
 		}
@@ -111,7 +111,7 @@ func WithDeadlineCauseWithKey(ctx context.Context, d time.Time, cause error, key
 	eg := new(errgroup.Group)
 	dg.cleanupGroups = append(dg.cleanupGroups, eg)
 	secondDg := &doneGroup{
-		cancel:        func(_ error) { dgCancel() },
+		cancel:        dgCancel,
 		_ctx:          dg._ctx,
 		_cancel:       dg._cancel,
 		cleanupGroups: []*errgroup.Group{eg},
@@ -234,7 +234,7 @@ func CancelWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	if !ok {
 		return ErrNotContainDoneGroup
 	}
-	dg.cancel(nil)
+	dg.cancel()
 	return WaitWithContextAndKey(ctx, ctxw, key)
 }
 
