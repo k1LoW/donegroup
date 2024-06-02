@@ -142,14 +142,29 @@ func Cancel(ctx context.Context) error {
 	return CancelWithKey(ctx, doneGroupKey)
 }
 
+// CancelWithCause cancels the context with cause. Then calls the function registered by Cleanup.
+func CancelWithCause(ctx context.Context, cause error) error {
+	return CancelWithKeyAndCause(ctx, doneGroupKey, cause)
+}
+
 // CancelWithTimeout cancels the context. Then calls the function registered by Cleanup with timeout.
 func CancelWithTimeout(ctx context.Context, timeout time.Duration) error {
 	return CancelWithTimeoutAndKey(ctx, timeout, doneGroupKey)
 }
 
+// CancelWithTimeoutAndCause cancels the context with cause. Then calls the function registered by Cleanup with timeout.
+func CancelWithTimeoutAndCause(ctx context.Context, timeout time.Duration, cause error) error {
+	return CancelWithTimeoutAndKeyAndCause(ctx, timeout, doneGroupKey, cause)
+}
+
 // CancelWithContext cancels the context. Then calls the function registered by Cleanup with context (ctxw).
 func CancelWithContext(ctx, ctxw context.Context) error {
 	return CancelWithContextAndKey(ctx, ctxw, doneGroupKey)
+}
+
+// CancelWithCauseAndContext cancels the context with cause. Then calls the function registered by Cleanup with context (ctxw).
+func CancelWithCauseAndContext(ctx context.Context, cause error, ctxw context.Context) error {
+	return CancelWithContextAndKeyAndCause(ctx, ctxw, doneGroupKey, cause)
 }
 
 // WaitWithKey blocks until the context is canceled. Then calls the function registered by Cleanup.
@@ -192,6 +207,11 @@ func CancelWithKey(ctx context.Context, key any) error {
 	return CancelWithContextAndKey(ctx, context.Background(), key)
 }
 
+// CancelWithKeyAndCause cancels the context with cause. Then calls the function registered by Cleanup.
+func CancelWithKeyAndCause(ctx context.Context, key any, cause error) error {
+	return CancelWithContextAndKeyAndCause(ctx, context.Background(), key, cause)
+}
+
 // CancelWithTimeoutAndKey cancels the context. Then calls the function registered by Cleanup with timeout.
 func CancelWithTimeoutAndKey(ctx context.Context, timeout time.Duration, key any) error {
 	ctxw, cancel := context.WithTimeout(context.Background(), timeout)
@@ -199,13 +219,25 @@ func CancelWithTimeoutAndKey(ctx context.Context, timeout time.Duration, key any
 	return CancelWithContextAndKey(ctx, ctxw, key)
 }
 
+// CancelWithTimeoutAndKeyAndCause cancels the context with cause. Then calls the function registered by Cleanup with timeout.
+func CancelWithTimeoutAndKeyAndCause(ctx context.Context, timeout time.Duration, key any, cause error) error {
+	ctxw, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	return CancelWithContextAndKeyAndCause(ctx, ctxw, key, cause)
+}
+
 // CancelWithContextAndKey cancels the context. Then calls the function registered by Cleanup with context (ctxw).
 func CancelWithContextAndKey(ctx, ctxw context.Context, key any) error {
+	return CancelWithContextAndKeyAndCause(ctx, ctxw, key, context.Canceled)
+}
+
+// CancelWithContextAndKeyAndCause cancels the context with cause. Then calls the function registered by Cleanup with context (ctxw).
+func CancelWithContextAndKeyAndCause(ctx, ctxw context.Context, key any, cause error) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		return ErrNotContainDoneGroup
 	}
-	dg.cancel(context.Canceled)
+	dg.cancel(cause)
 	return WaitWithContextAndKey(ctx, ctxw, key)
 }
 
