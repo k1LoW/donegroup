@@ -250,13 +250,11 @@ func Awaiter(ctx context.Context) (completed func(), err error) {
 func AwaiterWithKey(ctx context.Context, key any) (completed func(), err error) {
 	ctxx, completed := context.WithCancel(context.Background()) //nolint:govet
 	if err := CleanupWithKey(ctx, key, func(ctxw context.Context) error {
-		for {
-			select {
-			case <-ctxw.Done():
-				return ctxw.Err()
-			case <-ctxx.Done():
-				return nil
-			}
+		select {
+		case <-ctxw.Done():
+			return ctxw.Err()
+		case <-ctxx.Done():
+			return nil
 		}
 	}); err != nil {
 		return nil, err //nolint:govet
