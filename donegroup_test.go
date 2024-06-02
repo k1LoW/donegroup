@@ -15,7 +15,7 @@ func TestDoneGroup(t *testing.T) {
 
 	cleanup := false
 
-	if err := Cleanup(ctx, func(_ context.Context) error {
+	if err := Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
 		cleanup = true
 		return nil
@@ -43,7 +43,7 @@ func TestCleanup(t *testing.T) {
 	t.Run("Cleanup with WithCancel", func(t *testing.T) {
 		ctx, cancel := WithCancel(context.Background())
 		defer cancel()
-		err := Cleanup(ctx, func(_ context.Context) error {
+		err := Cleanup(ctx, func() error {
 			return nil
 		})
 		if err != nil {
@@ -53,7 +53,7 @@ func TestCleanup(t *testing.T) {
 
 	t.Run("Cleanup without WithCancel", func(t *testing.T) {
 		ctx := context.Background()
-		err := Cleanup(ctx, func(_ context.Context) error {
+		err := Cleanup(ctx, func() error {
 			return nil
 		})
 		if !errors.Is(err, ErrNotContainDoneGroup) {
@@ -103,7 +103,7 @@ func TestMultiCleanup(t *testing.T) {
 	cleanup := 0
 
 	for i := 0; i < 10; i++ {
-		if err := Cleanup(ctx, func(_ context.Context) error {
+		if err := Cleanup(ctx, func() error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -139,7 +139,7 @@ func TestNestedWithCancel(t *testing.T) {
 	thirdCleanup := 0
 
 	for i := 0; i < 10; i++ {
-		if err := Cleanup(firstCtx, func(_ context.Context) error {
+		if err := Cleanup(firstCtx, func() error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -151,7 +151,7 @@ func TestNestedWithCancel(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		if err := Cleanup(secondCtx, func(_ context.Context) error {
+		if err := Cleanup(secondCtx, func() error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -163,7 +163,7 @@ func TestNestedWithCancel(t *testing.T) {
 	}
 
 	for i := 0; i < 3; i++ {
-		if err := Cleanup(thirdCtx, func(_ context.Context) error {
+		if err := Cleanup(thirdCtx, func() error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -256,7 +256,7 @@ func TestRootWaitAll(t *testing.T) {
 	leafCleanup := 0
 
 	for i := 0; i < 10; i++ {
-		if err := Cleanup(rootCtx, func(_ context.Context) error {
+		if err := Cleanup(rootCtx, func() error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -268,7 +268,7 @@ func TestRootWaitAll(t *testing.T) {
 	}
 
 	for i := 0; i < 5; i++ {
-		if err := Cleanup(leafCtx, func(_ context.Context) error {
+		if err := Cleanup(leafCtx, func() error {
 			time.Sleep(10 * time.Millisecond)
 			mu.Lock()
 			defer mu.Unlock()
@@ -304,14 +304,9 @@ func TestWaitWithTimeout(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
 
-	if err := Cleanup(ctx, func(ctx context.Context) error {
+	if err := Cleanup(ctx, func() error {
 		for i := 0; i < 10; i++ {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				time.Sleep(2 * time.Millisecond)
-			}
+			time.Sleep(2 * time.Millisecond)
 		}
 		return nil
 	}); err != nil {
@@ -333,14 +328,9 @@ func TestWaitWithContext(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
 
-	if err := Cleanup(ctx, func(ctx context.Context) error {
+	if err := Cleanup(ctx, func() error {
 		for i := 0; i < 10; i++ {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				time.Sleep(2 * time.Millisecond)
-			}
+			time.Sleep(2 * time.Millisecond)
 		}
 		return nil
 	}); err != nil {
@@ -495,14 +485,9 @@ func TestCancelWithTimeout(t *testing.T) {
 	t.Parallel()
 	ctx, _ := WithCancel(context.Background())
 
-	if err := Cleanup(ctx, func(ctx context.Context) error {
+	if err := Cleanup(ctx, func() error {
 		for i := 0; i < 10; i++ {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				time.Sleep(2 * time.Millisecond)
-			}
+			time.Sleep(2 * time.Millisecond)
 		}
 		return nil
 	}); err != nil {
@@ -523,14 +508,9 @@ func TestCancelWithContext(t *testing.T) {
 	t.Parallel()
 	ctx, _ := WithCancel(context.Background())
 
-	if err := Cleanup(ctx, func(ctx context.Context) error {
+	if err := Cleanup(ctx, func() error {
 		for i := 0; i < 10; i++ {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				time.Sleep(2 * time.Millisecond)
-			}
+			time.Sleep(2 * time.Millisecond)
 		}
 		return nil
 	}); err != nil {
@@ -630,7 +610,7 @@ func TestWithCancelCause(t *testing.T) {
 
 	cleanup := false
 
-	if err := Cleanup(ctx, func(_ context.Context) error {
+	if err := Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
 		cleanup = true
 		return nil
@@ -665,7 +645,7 @@ func TestWithDeadline(t *testing.T) {
 
 	cleanup := false
 
-	if err := Cleanup(ctx, func(_ context.Context) error {
+	if err := Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
 		cleanup = true
 		return nil
@@ -694,7 +674,7 @@ func TestWithTimeout(t *testing.T) {
 
 	cleanup := false
 
-	if err := Cleanup(ctx, func(_ context.Context) error {
+	if err := Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
 		cleanup = true
 		return nil
@@ -724,7 +704,7 @@ func TestWithTimeoutCause(t *testing.T) {
 
 	cleanup := false
 
-	if err := Cleanup(ctx, func(_ context.Context) error {
+	if err := Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
 		cleanup = true
 		return nil
