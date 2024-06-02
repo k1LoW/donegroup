@@ -12,9 +12,7 @@ var ErrNotContainDoneGroup = errors.New("donegroup: context does not contain a d
 
 // doneGroup is cleanup function groups per Context.
 type doneGroup struct {
-	cancel context.CancelCauseFunc
-	// ctxw is the context used to call the cleanup functions
-	ctxw          context.Context
+	cancel        context.CancelCauseFunc
 	cleanupGroups []*sync.WaitGroup
 	errors        error
 	mu            sync.Mutex
@@ -178,17 +176,16 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	if !ok {
 		return ErrNotContainDoneGroup
 	}
-	dg.mu.Lock()
-	dg.ctxw = ctxw
-	dg.mu.Unlock()
 	<-ctx.Done()
 	wg := &sync.WaitGroup{}
 	for _, g := range dg.cleanupGroups {
 		wg.Add(1)
+		dg.mu.Lock()
 		go func() {
 			g.Wait()
 			wg.Done()
 		}()
+		dg.mu.Unlock()
 	}
 	ch := make(chan struct{})
 	go func() {

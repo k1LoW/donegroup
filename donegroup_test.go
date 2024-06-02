@@ -200,6 +200,7 @@ func TestNestedWithCancel(t *testing.T) {
 		thirdCancel()
 		<-thirdCtx.Done()
 
+		mu.Lock()
 		if firstCleanup != 0 {
 			t.Error("cleanup function for first called")
 		}
@@ -209,6 +210,7 @@ func TestNestedWithCancel(t *testing.T) {
 		if thirdCleanup != 0 {
 			t.Error("cleanup function for third called")
 		}
+		mu.Unlock()
 
 		secondCancel()
 		<-secondCtx.Done()
@@ -217,6 +219,7 @@ func TestNestedWithCancel(t *testing.T) {
 			t.Error(err)
 		}
 
+		mu.Lock()
 		if thirdCleanup != 3 {
 			t.Error("cleanup function for third not called")
 		}
@@ -226,6 +229,7 @@ func TestNestedWithCancel(t *testing.T) {
 		if firstCleanup != 0 {
 			t.Error("cleanup function for first called")
 		}
+		mu.Unlock()
 
 		firstCancel()
 		<-firstCtx.Done()
@@ -234,6 +238,7 @@ func TestNestedWithCancel(t *testing.T) {
 			t.Error(err)
 		}
 
+		mu.Lock()
 		if thirdCleanup != 3 {
 			t.Error("cleanup function for third not called")
 		}
@@ -243,6 +248,7 @@ func TestNestedWithCancel(t *testing.T) {
 		if firstCleanup != 10 {
 			t.Error("cleanup function for first not called")
 		}
+		mu.Unlock()
 	}()
 }
 
