@@ -154,7 +154,9 @@ func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) er
 	}
 
 	rootWg := dg.cleanupGroups[0]
+	dg.mu.Lock()
 	rootWg.Add(1)
+	dg.mu.Unlock()
 	go func() {
 		<-ctx.Done()
 		<-dg._ctx.Done()
@@ -223,7 +225,6 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	dg.ctxw = ctxw
 	dg.mu.Unlock()
 	<-ctx.Done()
-	dg._cancel()
 	wg := &sync.WaitGroup{}
 	for _, g := range dg.cleanupGroups {
 		wg.Add(1)
@@ -232,6 +233,7 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 			wg.Done()
 		}()
 	}
+	dg._cancel()
 	wg.Wait()
 	return dg.errors
 }
