@@ -1,5 +1,12 @@
 # Changelog
 
+## [v1.8.0](https://github.com/k1LoW/donegroup/compare/v1.7.0...v1.8.0) - 2024-06-02
+### Breaking Changes 🛠
+- If timeout is reached, it should not be waited for. by @k1LoW in https://github.com/k1LoW/donegroup/pull/39
+- Functions registered in Cleanup no longer need to do context handling. by @k1LoW in https://github.com/k1LoW/donegroup/pull/42
+### Other Changes
+- Use context.WithoutCancel instead of context.Background in the donegroup package. by @k1LoW in https://github.com/k1LoW/donegroup/pull/41
+
 ## [v1.7.0](https://github.com/k1LoW/donegroup/compare/v1.6.0...v1.7.0) - 2024-06-02
 ### New Features 🎉
 - Add `CancelWith*Cause` by @k1LoW in https://github.com/k1LoW/donegroup/pull/37
