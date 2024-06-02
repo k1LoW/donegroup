@@ -73,67 +73,16 @@ func WithTimeoutWithKey(ctx context.Context, timeout time.Duration, key any) (co
 
 // WithCancelCauseWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, context.CancelCauseFunc) {
-	dgCtx, dgCancelCause := context.WithCancelCause(ctx)
-
-	wg := &sync.WaitGroup{}
-
-	dg, ok := ctx.Value(key).(*doneGroup)
-	if !ok {
-		// Root doneGroup
-		_ctx, _cancel := context.WithCancel(context.Background())
-		dg = &doneGroup{
-			cancel:        dgCancelCause,
-			_ctx:          _ctx,
-			_cancel:       _cancel,
-			cleanupGroups: []*sync.WaitGroup{wg},
-		}
-		return context.WithValue(dgCtx, key, dg), dgCancelCause
-	}
-	// Add cleanupGroup to parent doneGroup
-	dg.cleanupGroups = append(dg.cleanupGroups, wg)
-
-	// Leaf doneGroup
-	_ctx, _cancel := context.WithCancel(dg._ctx)
-	leafDg := &doneGroup{
-		cancel:        dgCancelCause,
-		_ctx:          _ctx,
-		_cancel:       _cancel,
-		cleanupGroups: []*sync.WaitGroup{wg},
-	}
-	return context.WithValue(dgCtx, key, leafDg), dgCancelCause
+	ctx, cancelCause := context.WithCancelCause(ctx)
+	return withDoneGroup(ctx, cancelCause, key)
 }
 
 // WithDeadlineCauseWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithDeadlineCauseWithKey(ctx context.Context, d time.Time, cause error, key any) (context.Context, context.CancelFunc) {
-	ctx, dgCancelCause := context.WithCancelCause(ctx)
-	dgCtx, dgCancel := context.WithDeadlineCause(ctx, d, cause)
-
-	wg := &sync.WaitGroup{}
-
-	dg, ok := ctx.Value(key).(*doneGroup)
-	if !ok {
-		// Root doneGroup
-		_ctx, _cancel := context.WithCancel(context.Background())
-		dg = &doneGroup{
-			cancel:        dgCancelCause,
-			_ctx:          _ctx,
-			_cancel:       _cancel,
-			cleanupGroups: []*sync.WaitGroup{wg},
-		}
-		return context.WithValue(dgCtx, key, dg), dgCancel
-	}
-	// Add cleanupGroup to parent doneGroup
-	dg.cleanupGroups = append(dg.cleanupGroups, wg)
-
-	// Leaf doneGroup
-	_ctx, _cancel := context.WithCancel(dg._ctx)
-	leafDg := &doneGroup{
-		cancel:        dgCancelCause,
-		_ctx:          _ctx,
-		_cancel:       _cancel,
-		cleanupGroups: []*sync.WaitGroup{wg},
-	}
-	return context.WithValue(dgCtx, key, leafDg), dgCancel
+	ctx, cancelCause := context.WithCancelCause(ctx)
+	ctx, cancel := context.WithDeadlineCause(ctx, d, cause)
+	ctx, _ = withDoneGroup(ctx, cancelCause, key)
+	return ctx, cancel
 }
 
 // WithTimeoutCauseWithKey returns a copy of parent with a new Done channel and a doneGroup.
@@ -326,4 +275,32 @@ func GoWithKey(ctx context.Context, key any, f func() error) {
 		}
 		completed()
 	}()
+}
+
+func withDoneGroup(ctx context.Context, cancelCause context.CancelCauseFunc, key any) (context.Context, context.CancelCauseFunc) {
+	wg := &sync.WaitGroup{}
+	dg, ok := ctx.Value(key).(*doneGroup)
+	if !ok {
+		// Root doneGroup
+		_ctx, _cancel := context.WithCancel(context.Background())
+		dg = &doneGroup{
+			cancel:        cancelCause,
+			_ctx:          _ctx,
+			_cancel:       _cancel,
+			cleanupGroups: []*sync.WaitGroup{wg},
+		}
+		return context.WithValue(ctx, key, dg), cancelCause
+	}
+	// Add cleanupGroup to parent doneGroup
+	dg.cleanupGroups = append(dg.cleanupGroups, wg)
+
+	// Leaf doneGroup
+	_ctx, _cancel := context.WithCancel(dg._ctx)
+	leafDg := &doneGroup{
+		cancel:        cancelCause,
+		_ctx:          _ctx,
+		_cancel:       _cancel,
+		cleanupGroups: []*sync.WaitGroup{wg},
+	}
+	return context.WithValue(ctx, key, leafDg), cancelCause
 }
