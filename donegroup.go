@@ -18,7 +18,7 @@ type doneGroup struct {
 	cleanupGroups []*sync.WaitGroup
 	errors        error
 	mu            sync.Mutex
-	// _ctx, _cancel is a context/cancelFunc used to set dg.ctxw
+	// _ctx, _cancel is a trigger for calling cleanup functions
 	_ctx    context.Context
 	_cancel context.CancelFunc
 }
