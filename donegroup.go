@@ -18,9 +18,6 @@ type doneGroup struct {
 	cleanupGroups []*sync.WaitGroup
 	errors        error
 	mu            sync.Mutex
-	// _ctx, _cancel is a trigger for calling cleanup functions
-	_ctx    context.Context
-	_cancel context.CancelFunc
 }
 
 // WithCancel returns a copy of parent with a new Done channel and a doneGroup.
@@ -108,7 +105,6 @@ func CleanupWithKey(ctx context.Context, key any, f func() error) error {
 	dg.mu.Unlock()
 	go func() {
 		<-ctx.Done()
-		<-dg._ctx.Done()
 		if err := f(); err != nil {
 			dg.mu.Lock()
 			dg.errors = errors.Join(dg.errors, err)
@@ -194,7 +190,6 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 			wg.Done()
 		}()
 	}
-	dg._cancel()
 	ch := make(chan struct{})
 	go func() {
 		wg.Wait()
@@ -318,11 +313,8 @@ func withDoneGroup(ctx context.Context, cancelCause context.CancelCauseFunc, key
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		// Root doneGroup
-		_ctx, _cancel := context.WithCancel(context.WithoutCancel(ctx))
 		dg = &doneGroup{
 			cancel:        cancelCause,
-			_ctx:          _ctx,
-			_cancel:       _cancel,
 			cleanupGroups: []*sync.WaitGroup{wg},
 		}
 		return context.WithValue(ctx, key, dg), cancelCause
@@ -331,11 +323,8 @@ func withDoneGroup(ctx context.Context, cancelCause context.CancelCauseFunc, key
 	dg.cleanupGroups = append(dg.cleanupGroups, wg)
 
 	// Leaf doneGroup
-	_ctx, _cancel := context.WithCancel(dg._ctx)
 	leafDg := &doneGroup{
 		cancel:        cancelCause,
-		_ctx:          _ctx,
-		_cancel:       _cancel,
 		cleanupGroups: []*sync.WaitGroup{wg},
 	}
 	return context.WithValue(ctx, key, leafDg), cancelCause
