@@ -1,5 +1,16 @@
 # Changelog
 
+## [v1.7.0](https://github.com/k1LoW/donegroup/compare/v1.6.0...v1.7.0) - 2024-06-02
+### New Features 🎉
+- Add `CancelWith*Cause` by @k1LoW in https://github.com/k1LoW/donegroup/pull/37
+### Fix bug 🐛
+- Fix doneGroup._ctx tree by @k1LoW in https://github.com/k1LoW/donegroup/pull/35
+### Other Changes
+- Use sync.WaitGroup instead of errgroup.Group by @k1LoW in https://github.com/k1LoW/donegroup/pull/32
+- Remove unnecessary for loop by @k1LoW in https://github.com/k1LoW/donegroup/pull/33
+- Use context.CancelCauseFunc by @k1LoW in https://github.com/k1LoW/donegroup/pull/34
+- Fix cancel timing by @k1LoW in https://github.com/k1LoW/donegroup/pull/36
+
 ## [v1.6.0](https://github.com/k1LoW/donegroup/compare/v1.5.1...v1.6.0) - 2024-05-21
 ### New Features 🎉
 - Add WithCancelCause by @k1LoW in https://github.com/k1LoW/donegroup/pull/27
