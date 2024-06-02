@@ -2,7 +2,7 @@
 
 `donegroup` is a package that provides a graceful cleanup transaction to context.Context when the context is canceled ( **done** ).
 
-> errgroup.Group + <-ctx.Done() = donegroup
+> sync.WaitGroup + <-ctx.Done() = donegroup
 
 ## Usage
 
