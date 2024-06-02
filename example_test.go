@@ -13,7 +13,7 @@ func Example() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
 	// Cleanup process of some kind
-	if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
+	if err := donegroup.Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
 		fmt.Println("cleanup with sleep")
 		return nil
@@ -22,7 +22,7 @@ func Example() {
 	}
 
 	// Cleanup process of some kind
-	if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
+	if err := donegroup.Cleanup(ctx, func() error {
 		fmt.Println("cleanup")
 		return nil
 	}); err != nil {
@@ -119,15 +119,10 @@ func ExampleWaitWithTimeout() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
 	// Cleanup process of some kind
-	if err := donegroup.Cleanup(ctx, func(ctx context.Context) error {
+	if err := donegroup.Cleanup(ctx, func() error {
 		fmt.Println("cleanup start")
 		for i := 0; i < 10; i++ {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-				time.Sleep(2 * time.Millisecond)
-			}
+			time.Sleep(2 * time.Millisecond)
 		}
 		fmt.Println("cleanup finish")
 		return nil

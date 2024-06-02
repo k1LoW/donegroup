@@ -69,7 +69,7 @@ func main() {
 	ctx, cancel := donegroup.WithCancel(context.Background())
 
 	// Cleanup process func1 of some kind
-	if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
+	if err := donegroup.Cleanup(ctx, func() error {
 		fmt.Println("cleanup func1")
 		return nil
 	}); err != nil {
@@ -77,7 +77,7 @@ func main() {
 	}
 
 	// Cleanup process func2 of some kind
-	if err := donegroup.Cleanup(ctx, func(_ context.Context) error {
+	if err := donegroup.Cleanup(ctx, func() error {
 		time.Sleep(1 * time.Second)
 		fmt.Println("cleanup func2")
 		return nil
@@ -132,15 +132,10 @@ gantt
 ctx, cancel := WithCancel(context.Background())
 
 // Cleanup process of some kind
-if err := Cleanup(ctx, func(ctx context.Context) error {
+if err := Cleanup(ctx, func() error {
 	fmt.Println("cleanup start")
 	for i := 0; i < 10; i++ {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		default:
-			time.Sleep(2 * time.Millisecond)
-		}
+		time.Sleep(2 * time.Millisecond)
 	}
 	fmt.Println("cleanup finish")
 	return nil

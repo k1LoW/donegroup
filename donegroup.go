@@ -91,12 +91,12 @@ func WithTimeoutCauseWithKey(ctx context.Context, timeout time.Duration, cause e
 }
 
 // Cleanup registers a function to be called when the context is canceled.
-func Cleanup(ctx context.Context, f func(ctx context.Context) error) error {
+func Cleanup(ctx context.Context, f func() error) error {
 	return CleanupWithKey(ctx, doneGroupKey, f)
 }
 
 // CleanupWithKey Cleanup registers a function to be called when the context is canceled.
-func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) error) error {
+func CleanupWithKey(ctx context.Context, key any, f func() error) error {
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		return ErrNotContainDoneGroup
@@ -109,10 +109,7 @@ func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) er
 	go func() {
 		<-ctx.Done()
 		<-dg._ctx.Done()
-		dg.mu.Lock()
-		ctxw := dg.ctxw
-		dg.mu.Unlock()
-		if err := f(ctxw); err != nil {
+		if err := f(); err != nil {
 			dg.mu.Lock()
 			dg.errors = errors.Join(dg.errors, err)
 			dg.mu.Unlock()
@@ -262,13 +259,9 @@ func Awaiter(ctx context.Context) (completed func(), err error) {
 // Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
 func AwaiterWithKey(ctx context.Context, key any) (completed func(), err error) {
 	ctxx, completed := context.WithCancel(context.WithoutCancel(ctx)) //nolint:govet
-	if err := CleanupWithKey(ctx, key, func(ctxw context.Context) error {
-		select {
-		case <-ctxw.Done():
-			return ctxw.Err()
-		case <-ctxx.Done():
-			return nil
-		}
+	if err := CleanupWithKey(ctx, key, func() error {
+		<-ctxx.Done()
+		return nil
 	}); err != nil {
 		return nil, err //nolint:govet
 	}

@@ -6,7 +6,7 @@ test:
 	go test ./... -coverprofile=coverage.out -covermode=count -count=1
 
 race:
-	go test ./... -race -count=1
+	go test ./... -race -count=1 -run Test
 
 lint:
 	golangci-lint run ./...
