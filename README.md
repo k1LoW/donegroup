@@ -129,10 +129,10 @@ gantt
 ```
 
 ```go
-ctx, cancel := WithCancel(context.Background())
+ctx, cancel := donegroup.WithCancel(context.Background())
 
 // Cleanup process of some kind
-if err := Cleanup(ctx, func() error {
+if err := donegroup.Cleanup(ctx, func() error {
 	fmt.Println("cleanup start")
 	for i := 0; i < 10; i++ {
 		time.Sleep(2 * time.Millisecond)
