@@ -174,6 +174,28 @@ func TestNestedWithCancel(t *testing.T) {
 		}
 	}
 
+	{
+		dg, ok := firstCtx.Value(doneGroupKey).(*doneGroup)
+		if !ok {
+			t.Fatal("firstCtx.Value(doneGroupKey) is not *doneGroup")
+		}
+		got := len(dg.cleanupGroups)
+		if want := 2; got != want {
+			t.Errorf("firstCtx has %d cleanup groups, want %d", got, want)
+		}
+	}
+
+	{
+		dg, ok := secondCtx.Value(doneGroupKey).(*doneGroup)
+		if !ok {
+			t.Fatal("firstCtx.Value(doneGroupKey) is not *doneGroup")
+		}
+		got := len(dg.cleanupGroups)
+		if want := 1; got != want {
+			t.Errorf("firstCtx has %d cleanup groups, want %d", got, want)
+		}
+	}
+
 	defer func() {
 		thirdCancel()
 		<-thirdCtx.Done()
@@ -212,6 +234,12 @@ func TestNestedWithCancel(t *testing.T) {
 			t.Error(err)
 		}
 
+		if thirdCleanup != 3 {
+			t.Error("cleanup function for third not called")
+		}
+		if secondCleanup != 5 {
+			t.Error("cleanup function for second not called")
+		}
 		if firstCleanup != 10 {
 			t.Error("cleanup function for first not called")
 		}
