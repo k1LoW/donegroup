@@ -222,7 +222,6 @@ go func() {
 	defer donegroup.Awaitable(ctx)()
 	time.Sleep(1000 * time.Millisecond)
 	fmt.Println("do something")
-	completed()
 }()
 ```
 
