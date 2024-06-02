@@ -134,8 +134,8 @@ func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) er
 		return ErrNotContainDoneGroup
 	}
 
-	first := dg.cleanupGroups[0]
-	first.Add(1)
+	firstWg := dg.cleanupGroups[0]
+	firstWg.Add(1)
 	go func() {
 		<-ctx.Done()
 		<-dg._ctx.Done()
@@ -147,7 +147,7 @@ func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) er
 			dg.errors = errors.Join(dg.errors, err)
 			dg.mu.Unlock()
 		}
-		first.Done()
+		firstWg.Done()
 	}()
 	return nil
 }
