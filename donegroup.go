@@ -154,7 +154,9 @@ func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) er
 	}
 
 	rootWg := dg.cleanupGroups[0]
+	dg.mu.Lock()
 	rootWg.Add(1)
+	dg.mu.Unlock()
 	go func() {
 		<-ctx.Done()
 		<-dg._ctx.Done()
