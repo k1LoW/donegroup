@@ -206,6 +206,8 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	select {
 	case <-ch:
 	case <-ctxw.Done():
+		dg.mu.Lock()
+		defer dg.mu.Unlock()
 		dg.errors = errors.Join(dg.errors, ctxw.Err())
 	}
 	return dg.errors
