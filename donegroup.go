@@ -5,8 +5,6 @@ import (
 	"errors"
 	"sync"
 	"time"
-
-	"golang.org/x/sync/errgroup"
 )
 
 var doneGroupKey = struct{}{}
@@ -17,7 +15,7 @@ type doneGroup struct {
 	cancel context.CancelFunc
 	// ctxw is the context used to call the cleanup functions
 	ctxw          context.Context
-	cleanupGroups []*errgroup.Group
+	cleanupGroups []*sync.WaitGroup
 	errors        error
 	mu            sync.Mutex
 	// _ctx, _cancel is a context/cancelFunc used to set dg.ctxw
@@ -85,13 +83,13 @@ func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, cont
 			_cancel: cancel,
 		}
 	}
-	eg := new(errgroup.Group)
-	dg.cleanupGroups = append(dg.cleanupGroups, eg)
+	wg := &sync.WaitGroup{}
+	dg.cleanupGroups = append(dg.cleanupGroups, wg)
 	secondDg := &doneGroup{
 		cancel:        func() { dgCancelCause(nil) },
 		_ctx:          dg._ctx,
 		_cancel:       dg._cancel,
-		cleanupGroups: []*errgroup.Group{eg},
+		cleanupGroups: []*sync.WaitGroup{wg},
 	}
 	return context.WithValue(dgCtx, key, secondDg), dgCancelCause
 }
@@ -108,13 +106,13 @@ func WithDeadlineCauseWithKey(ctx context.Context, d time.Time, cause error, key
 			_cancel: cancel,
 		}
 	}
-	eg := new(errgroup.Group)
-	dg.cleanupGroups = append(dg.cleanupGroups, eg)
+	wg := &sync.WaitGroup{}
+	dg.cleanupGroups = append(dg.cleanupGroups, wg)
 	secondDg := &doneGroup{
 		cancel:        dgCancel,
 		_ctx:          dg._ctx,
 		_cancel:       dg._cancel,
-		cleanupGroups: []*errgroup.Group{eg},
+		cleanupGroups: []*sync.WaitGroup{wg},
 	}
 	return context.WithValue(dgCtx, key, secondDg), dgCancel
 }
@@ -137,7 +135,8 @@ func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) er
 	}
 
 	first := dg.cleanupGroups[0]
-	first.Go(func() error {
+	first.Add(1)
+	go func() {
 		<-ctx.Done()
 		<-dg._ctx.Done()
 		dg.mu.Lock()
@@ -148,8 +147,8 @@ func CleanupWithKey(ctx context.Context, key any, f func(ctx context.Context) er
 			dg.errors = errors.Join(dg.errors, err)
 			dg.mu.Unlock()
 		}
-		return nil
-	})
+		first.Done()
+	}()
 	return nil
 }
 
@@ -206,13 +205,15 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	dg.mu.Unlock()
 	<-ctx.Done()
 	dg._cancel()
-	eg, _ := errgroup.WithContext(ctxw)
+	wg := &sync.WaitGroup{}
 	for _, g := range dg.cleanupGroups {
-		eg.Go(g.Wait)
+		wg.Add(1)
+		go func() {
+			g.Wait()
+			wg.Done()
+		}()
 	}
-	if err := eg.Wait(); err != nil {
-		return errors.Join(dg.errors, err)
-	}
+	wg.Wait()
 	return dg.errors
 }
 
