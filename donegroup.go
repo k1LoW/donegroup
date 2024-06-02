@@ -12,7 +12,7 @@ var ErrNotContainDoneGroup = errors.New("donegroup: context does not contain a d
 
 // doneGroup is cleanup function groups per Context.
 type doneGroup struct {
-	cancel context.CancelFunc
+	cancel context.CancelCauseFunc
 	// ctxw is the context used to call the cleanup functions
 	ctxw          context.Context
 	cleanupGroups []*sync.WaitGroup
@@ -78,7 +78,7 @@ func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, cont
 	if !ok {
 		ctx, cancel := context.WithCancel(context.Background())
 		dg = &doneGroup{
-			cancel:  func() { dgCancelCause(nil) },
+			cancel:  dgCancelCause,
 			_ctx:    ctx,
 			_cancel: cancel,
 		}
@@ -86,7 +86,7 @@ func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, cont
 	wg := &sync.WaitGroup{}
 	dg.cleanupGroups = append(dg.cleanupGroups, wg)
 	secondDg := &doneGroup{
-		cancel:        func() { dgCancelCause(nil) },
+		cancel:        dgCancelCause,
 		_ctx:          dg._ctx,
 		_cancel:       dg._cancel,
 		cleanupGroups: []*sync.WaitGroup{wg},
@@ -96,12 +96,13 @@ func WithCancelCauseWithKey(ctx context.Context, key any) (context.Context, cont
 
 // WithDeadlineCauseWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithDeadlineCauseWithKey(ctx context.Context, d time.Time, cause error, key any) (context.Context, context.CancelFunc) {
+	ctx, dgCancelCause := context.WithCancelCause(ctx)
 	dgCtx, dgCancel := context.WithDeadlineCause(ctx, d, cause)
 	dg, ok := ctx.Value(key).(*doneGroup)
 	if !ok {
 		ctx, cancel := context.WithCancel(context.Background())
 		dg = &doneGroup{
-			cancel:  dgCancel,
+			cancel:  dgCancelCause,
 			_ctx:    ctx,
 			_cancel: cancel,
 		}
@@ -109,7 +110,7 @@ func WithDeadlineCauseWithKey(ctx context.Context, d time.Time, cause error, key
 	wg := &sync.WaitGroup{}
 	dg.cleanupGroups = append(dg.cleanupGroups, wg)
 	secondDg := &doneGroup{
-		cancel:        dgCancel,
+		cancel:        dgCancelCause,
 		_ctx:          dg._ctx,
 		_cancel:       dg._cancel,
 		cleanupGroups: []*sync.WaitGroup{wg},
@@ -235,7 +236,7 @@ func CancelWithContextAndKey(ctx, ctxw context.Context, key any) error {
 	if !ok {
 		return ErrNotContainDoneGroup
 	}
-	dg.cancel()
+	dg.cancel(context.Canceled)
 	return WaitWithContextAndKey(ctx, ctxw, key)
 }
 
