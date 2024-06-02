@@ -198,7 +198,18 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 		}()
 	}
 	dg._cancel()
-	wg.Wait()
+	ch := make(chan struct{})
+	go func() {
+		wg.Wait()
+		close(ch)
+	}()
+	select {
+	case <-ch:
+	case <-ctxw.Done():
+		dg.mu.Lock()
+		defer dg.mu.Unlock()
+		dg.errors = errors.Join(dg.errors, ctxw.Err())
+	}
 	return dg.errors
 }
 
