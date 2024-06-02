@@ -763,7 +763,7 @@ func TestCancelWithCause(t *testing.T) {
 		}
 	})
 
-	t.Run("Cancel with cause immidiately", func(t *testing.T) {
+	t.Run("Cancel with cause immediately", func(t *testing.T) {
 		ctx, cancel := WithTimeout(context.Background(), 1*time.Millisecond)
 		defer cancel()
 
