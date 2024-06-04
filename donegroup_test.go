@@ -82,6 +82,35 @@ func TestWait(t *testing.T) {
 	})
 }
 
+func TestNoWait(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := WithCancel(context.Background())
+
+	cleanup := false
+
+	if err := Cleanup(ctx, func() error {
+		time.Sleep(10 * time.Millisecond)
+		cleanup = true
+		return nil
+	}); err != nil {
+		t.Error(err)
+	}
+
+	defer func() {
+		cancel()
+		if cleanup {
+			t.Error("cleanup function called")
+		}
+
+		time.Sleep(10 * time.Millisecond)
+		if !cleanup {
+			t.Error("cleanup function not called")
+		}
+	}()
+
+	cleanup = false
+}
+
 func TestNoCleanup(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
