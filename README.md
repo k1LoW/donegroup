@@ -29,7 +29,7 @@ defer func() {
 }()
 ```
 
-### Basic usage ( [donegroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) )
+### [donegroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) ( Basic usage )
 
 ``` mermaid
 gantt
@@ -104,7 +104,7 @@ func main() {
 
 [dongroup.Cleanup](https://pkg.go.dev/github.com/k1LoW/donegroup#Cleanup) is similar in usage to [testing.T.Cleanup](https://pkg.go.dev/testing#T.Cleanup), but the order of execution is not guaranteed.
 
-### Wait for a specified duration ( [donegroup.WaitWithTimeout](https://pkg.go.dev/github.com/k1LoW/donegroup#WaitWithTimeout) )
+### [donegroup.WaitWithTimeout](https://pkg.go.dev/github.com/k1LoW/donegroup#WaitWithTimeout) ( Wait for a specified duration )
 
 Using [donegroup.WaitWithTimeout](https://pkg.go.dev/github.com/k1LoW/donegroup#WaitWithTimeout), it is possible to set a timeout for the cleanup processes.
 
@@ -225,7 +225,7 @@ go func() {
 }()
 ```
 
-### Syntax sugar for `go func()` and donegroup.Awaiter ( [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go) )
+### [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go) ( Syntax sugar for `go func()` and donegroup.Awaiter )
 
 [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go) can execute arbitrary process asynchronously while still waiting for it to finish, similar to [donegroup.Awaiter](https://pkg.go.dev/github.com/k1LoW/donegroup#Awaiter).
 
@@ -255,7 +255,7 @@ donegroup.Go(ctx, func() error {
 
 Also, with [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go), the error can be received via [donegroup.Wait](https://pkg.go.dev/github.com/k1LoW/donegroup#Wait).
 
-### Syntax sugar for `cancel()` and donegroup.Wait ( [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) )
+### [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) ( Syntax sugar for `cancel()` and donegroup.Wait )
 
 If cancel() and [donegroup.Wait](https://pkg.go.dev/github.com/k1LoW/donegroup#Wait) are to be executed at the same time, [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) can be used.
 
