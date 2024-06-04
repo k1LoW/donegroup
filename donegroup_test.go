@@ -512,6 +512,9 @@ func TestCancel(t *testing.T) {
 		if err != nil {
 			t.Error(err)
 		}
+		if !errors.Is(ctx.Err(), context.Canceled) {
+			t.Error("expected context.Canceled")
+		}
 	})
 
 	t.Run("Cancel without WithCancel", func(t *testing.T) {
@@ -521,54 +524,6 @@ func TestCancel(t *testing.T) {
 			t.Error("expected error, got nil")
 		}
 	})
-}
-
-func TestCancelWithTimeout(t *testing.T) {
-	t.Parallel()
-	ctx, _ := WithCancel(context.Background())
-
-	if err := Cleanup(ctx, func() error {
-		for i := 0; i < 10; i++ {
-			time.Sleep(2 * time.Millisecond)
-		}
-		return nil
-	}); err != nil {
-		t.Error(err)
-	}
-
-	timeout := 5 * time.Millisecond
-
-	defer func() {
-		time.Sleep(10 * time.Millisecond)
-		if err := CancelWithTimeout(ctx, timeout); !errors.Is(err, context.DeadlineExceeded) {
-			t.Error("expected timeout error")
-		}
-	}()
-}
-
-func TestCancelWithContext(t *testing.T) {
-	t.Parallel()
-	ctx, _ := WithCancel(context.Background())
-
-	if err := Cleanup(ctx, func() error {
-		for i := 0; i < 10; i++ {
-			time.Sleep(2 * time.Millisecond)
-		}
-		return nil
-	}); err != nil {
-		t.Error(err)
-	}
-
-	timeout := 5 * time.Millisecond
-
-	defer func() {
-		ctxx, cancelx := context.WithTimeout(context.Background(), timeout)
-		defer cancelx()
-		time.Sleep(10 * time.Millisecond)
-		if err := CancelWithContext(ctx, ctxx); !errors.Is(err, context.DeadlineExceeded) {
-			t.Error("expected timeout error")
-		}
-	}()
 }
 
 func TestGo(t *testing.T) {
@@ -773,8 +728,7 @@ func TestCancelWithCause(t *testing.T) {
 	t.Parallel()
 	var errTest = errors.New("test error")
 	t.Run("Timeout", func(t *testing.T) {
-		ctx, cancel := WithTimeout(context.Background(), 1*time.Millisecond)
-		defer cancel()
+		ctx, _ := WithTimeout(context.Background(), 1*time.Millisecond)
 
 		if err := Wait(ctx); err != nil {
 			t.Error(err)
@@ -785,14 +739,10 @@ func TestCancelWithCause(t *testing.T) {
 		}
 	})
 
-	t.Run("Cancel with cause immediately", func(t *testing.T) {
-		ctx, cancel := WithTimeout(context.Background(), 1*time.Millisecond)
-		defer cancel()
+	t.Run("Cancel with cause", func(t *testing.T) {
+		ctx, _ := WithCancel(context.Background())
 
-		if err := CancelWithTimeoutAndCause(ctx, 1*time.Millisecond, errTest); err != nil {
-			t.Error(err)
-		}
-		if err := Wait(ctx); err != nil {
+		if err := CancelWithCause(ctx, errTest); err != nil {
 			t.Error(err)
 		}
 
