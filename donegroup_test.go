@@ -727,17 +727,7 @@ func TestWithTimeoutCause(t *testing.T) {
 func TestCancelWithCause(t *testing.T) {
 	t.Parallel()
 	var errTest = errors.New("test error")
-	t.Run("Timeout", func(t *testing.T) {
-		ctx, _ := WithTimeout(context.Background(), 1*time.Millisecond)
-
-		if err := Wait(ctx); err != nil {
-			t.Error(err)
-		}
-
-		if !errors.Is(context.Cause(ctx), context.DeadlineExceeded) {
-			t.Errorf("got %v, want %v", context.Cause(ctx), context.DeadlineExceeded)
-		}
-	})
+	var errTest2 = errors.New("test error2")
 
 	t.Run("Cancel with cause", func(t *testing.T) {
 		ctx, _ := WithCancel(context.Background())
@@ -748,6 +738,25 @@ func TestCancelWithCause(t *testing.T) {
 
 		if !errors.Is(context.Cause(ctx), errTest) {
 			t.Errorf("got %v, want %v", context.Cause(ctx), errTest)
+		}
+	})
+
+	t.Run("Cancel with cause2", func(t *testing.T) {
+		ctx, _ := WithCancel(context.Background())
+
+		if err := CancelWithCause(ctx, errTest); err != nil {
+			t.Error(err)
+		}
+
+		if err := CancelWithCause(ctx, errTest2); err != nil {
+			t.Error(err)
+		}
+
+		if !errors.Is(context.Cause(ctx), errTest) {
+			t.Errorf("got %v, want %v", context.Cause(ctx), errTest)
+		}
+		if errors.Is(context.Cause(ctx), errTest2) {
+			t.Error("got errTest2, want errTest")
 		}
 	})
 }
