@@ -255,29 +255,21 @@ donegroup.Go(ctx, func() error {
 
 Also, with [donegroup.Go](https://pkg.go.dev/github.com/k1LoW/donegroup#Go), the error can be received via [donegroup.Wait](https://pkg.go.dev/github.com/k1LoW/donegroup#Wait).
 
-### [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) ( Syntax sugar for `cancel()` and donegroup.Wait )
+### [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel)
 
-If cancel() and [donegroup.Wait](https://pkg.go.dev/github.com/k1LoW/donegroup#Wait) are to be executed at the same time, [donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) can be used.
+[donegroup.Cancel](https://pkg.go.dev/github.com/k1LoW/donegroup#Cancel) can cancel the context.
+
+Can be cancelled anywhere with the context.
 
 ``` go
-ctx, cancel := donegroup.WithCancel(context.Background())
+ctx, _ := donegroup.WithCancel(context.Background())
+
 defer func() {
-	cancel()
+	if err := donegroup.Cancel(ctx); err != nil {
+        log.Fatal(err)
+    }
 	if err := donegroup.Wait(ctx); err != nil {
 		log.Fatal(err)
 	}
 }()
 ```
-
-and
-
-``` go
-ctx, _ := donegroup.WithCancel(context.Background())
-defer func() {
-	if err := donegroup.Cancel(ctx); err != nil {
-		log.Fatal(err)
-	}
-}()
-```
-
-are equivalent.
