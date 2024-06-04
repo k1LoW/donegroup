@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.9.0](https://github.com/k1LoW/donegroup/compare/v1.8.1...v1.9.0) - 2024-06-04
+### Breaking Changes 🛠
+- Change the behaviour of `donegroup.Cancel` significantly. by @k1LoW in https://github.com/k1LoW/donegroup/pull/47
+
 ## [v1.8.1](https://github.com/k1LoW/donegroup/compare/v1.8.0...v1.8.1) - 2024-06-02
 ### Fix bug 🐛
 - Cleanup functions should be executed immediately when the context is done. by @k1LoW in https://github.com/k1LoW/donegroup/pull/44
