@@ -84,12 +84,15 @@ func TestWait(t *testing.T) {
 
 func TestNoWait(t *testing.T) {
 	t.Parallel()
+	mu := sync.Mutex{}
 	ctx, cancel := WithCancel(context.Background())
 
 	cleanup := false
 
 	if err := Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
+		mu.Lock()
+		defer mu.Unlock()
 		cleanup = true
 		return nil
 	}); err != nil {
@@ -98,14 +101,18 @@ func TestNoWait(t *testing.T) {
 
 	defer func() {
 		cancel()
+		mu.Lock()
 		if cleanup {
 			t.Error("cleanup function called")
 		}
+		mu.Unlock()
 
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
+		mu.Lock()
 		if !cleanup {
 			t.Error("cleanup function not called")
 		}
+		mu.Unlock()
 	}()
 
 	cleanup = false
