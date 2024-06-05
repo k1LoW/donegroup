@@ -760,3 +760,27 @@ func TestCancelWithCause(t *testing.T) {
 		}
 	})
 }
+
+func TestWithoutCancel(t *testing.T) {
+	t.Parallel()
+	ctx, cancel := WithCancel(context.Background())
+
+	cleanup := false
+
+	if err := Cleanup(ctx, func() error {
+		cleanup = true
+		return nil
+	}); err != nil {
+		t.Error(err)
+	}
+
+	ctx = WithoutCancel(ctx)
+	cancel()
+	if err := Wait(ctx); err == nil || !errors.Is(err, ErrNotContainDoneGroup) {
+		t.Errorf("got %v, want %v", err, ErrNotContainDoneGroup)
+	}
+
+	if cleanup {
+		t.Error("cleanup function called")
+	}
+}

@@ -50,10 +50,20 @@ func WithTimeoutCause(ctx context.Context, timeout time.Duration, cause error) (
 	return WithTimeoutCauseWithKey(ctx, timeout, cause, doneGroupKey)
 }
 
+// WithoutCancel returns a copy of parent that is not canceled when parent is canceled and does not have a doneGroup.
+func WithoutCancel(ctx context.Context) context.Context {
+	return WithoutCancelWithKey(ctx, doneGroupKey)
+}
+
+// WithoutCancelWithKey returns a copy of parent that is not canceled when parent is canceled and does not have a doneGroup.
+func WithoutCancelWithKey(ctx context.Context, key any) context.Context {
+	return context.WithValue(context.WithoutCancel(ctx), key, nil)
+}
+
 // WithCancelWithKey returns a copy of parent with a new Done channel and a doneGroup.
 func WithCancelWithKey(ctx context.Context, key any) (context.Context, context.CancelFunc) {
-	ctx, fn := WithCancelCauseWithKey(ctx, key)
-	return ctx, func() { fn(nil) }
+	ctx, cancelCause := WithCancelCauseWithKey(ctx, key)
+	return ctx, func() { cancelCause(nil) }
 }
 
 // WithDeadlineWithKey returns a copy of parent with a new Done channel and a doneGroup.
