@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.10.0](https://github.com/k1LoW/donegroup/compare/v1.9.0...v1.10.0) - 2024-06-05
+### New Features 🎉
+- Add `WithoutCancel` by @k1LoW in https://github.com/k1LoW/donegroup/pull/49
+
 ## [v1.9.0](https://github.com/k1LoW/donegroup/compare/v1.8.1...v1.9.0) - 2024-06-04
 ### Breaking Changes 🛠
 - Change the behaviour of `donegroup.Cancel` significantly. by @k1LoW in https://github.com/k1LoW/donegroup/pull/47
