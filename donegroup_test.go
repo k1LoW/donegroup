@@ -777,14 +777,18 @@ func TestWithoutCancel(t *testing.T) {
 	}
 
 	ctx = WithoutCancel(ctx)
-	cancel()
+
 	if err := Wait(ctx); err == nil || !errors.Is(err, ErrNotContainDoneGroup) {
 		t.Errorf("got %v, want %v", err, ErrNotContainDoneGroup)
 	}
 
+	cancel()
+
+	time.Sleep(5 * time.Millisecond)
+
 	mu.Lock()
 	defer mu.Unlock()
-	if cleanup {
-		t.Error("cleanup function called")
+	if !cleanup {
+		t.Error("cleanup function not called")
 	}
 }
