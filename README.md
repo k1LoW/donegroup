@@ -266,8 +266,8 @@ ctx, _ := donegroup.WithCancel(context.Background())
 
 defer func() {
 	if err := donegroup.Cancel(ctx); err != nil {
-        log.Fatal(err)
-    }
+		log.Fatal(err)
+	}
 	if err := donegroup.Wait(ctx); err != nil {
 		log.Fatal(err)
 	}
