@@ -764,10 +764,12 @@ func TestCancelWithCause(t *testing.T) {
 func TestWithoutCancel(t *testing.T) {
 	t.Parallel()
 	ctx, cancel := WithCancel(context.Background())
-
+	mu := sync.Mutex{}
 	cleanup := false
 
 	if err := Cleanup(ctx, func() error {
+		mu.Lock()
+		defer mu.Unlock()
 		cleanup = true
 		return nil
 	}); err != nil {
@@ -780,6 +782,8 @@ func TestWithoutCancel(t *testing.T) {
 		t.Errorf("got %v, want %v", err, ErrNotContainDoneGroup)
 	}
 
+	mu.Lock()
+	defer mu.Unlock()
 	if cleanup {
 		t.Error("cleanup function called")
 	}
