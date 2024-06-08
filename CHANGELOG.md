@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.10.1](https://github.com/k1LoW/donegroup/compare/v1.10.0...v1.10.1) - 2024-06-08
+### Other Changes
+- Refactor withDoneGroup by @k1LoW in https://github.com/k1LoW/donegroup/pull/51
+
 ## [v1.10.0](https://github.com/k1LoW/donegroup/compare/v1.9.0...v1.10.0) - 2024-06-05
 ### New Features 🎉
 - Add `WithoutCancel` by @k1LoW in https://github.com/k1LoW/donegroup/pull/49
