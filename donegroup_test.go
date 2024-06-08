@@ -80,6 +80,33 @@ func TestWait(t *testing.T) {
 			t.Errorf("expected ErrNotContainDoneGroup, got %v", err)
 		}
 	})
+
+	t.Run("Collect errors", func(t *testing.T) {
+		var (
+			errTest  = errors.New("test error")
+			errTest2 = errors.New("test error 2")
+		)
+
+		ctx, cancel := WithCancel(context.Background())
+		if err := Cleanup(ctx, func() error {
+			return errTest
+		}); err != nil {
+			t.Error(err)
+		}
+		if err := Cleanup(ctx, func() error {
+			return errTest2
+		}); err != nil {
+			t.Error(err)
+		}
+		cancel()
+		err := Wait(ctx)
+		if !errors.Is(err, errTest) {
+			t.Errorf("expected %v, got %v", errTest, err)
+		}
+		if !errors.Is(err, errTest2) {
+			t.Errorf("expected %v, got %v", errTest2, err)
+		}
+	})
 }
 
 func TestNoWait(t *testing.T) {
