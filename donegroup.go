@@ -111,15 +111,15 @@ func CleanupWithKey(ctx context.Context, key any, f func() error) error {
 	dg.mu.Lock()
 	rootWg.Add(1)
 	dg.mu.Unlock()
-	go func() {
-		<-ctx.Done()
+
+	_ = context.AfterFunc(ctx, func() {
 		if err := f(); err != nil {
 			dg.mu.Lock()
 			dg.errors = errors.Join(dg.errors, err)
 			dg.mu.Unlock()
 		}
 		rootWg.Done()
-	}()
+	})
 	return nil
 }
 
