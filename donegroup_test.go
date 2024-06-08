@@ -667,17 +667,22 @@ func TestWithDeadline(t *testing.T) {
 	t.Parallel()
 	ctx, _ := WithDeadline(context.Background(), time.Now().Add(5*time.Millisecond))
 
+	mu := sync.Mutex{}
 	cleanup := false
 
 	if err := Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
+		mu.Lock()
+		defer mu.Unlock()
 		cleanup = true
 		return nil
 	}); err != nil {
 		t.Error(err)
 	}
 
+	mu.Lock()
 	cleanup = false
+	mu.Unlock()
 
 	if err := Wait(ctx); err != nil {
 		t.Error(err)
@@ -696,17 +701,22 @@ func TestWithTimeout(t *testing.T) {
 	t.Parallel()
 	ctx, _ := WithTimeout(context.Background(), 5*time.Millisecond)
 
+	mu := sync.Mutex{}
 	cleanup := false
 
 	if err := Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
+		mu.Lock()
+		defer mu.Unlock()
 		cleanup = true
 		return nil
 	}); err != nil {
 		t.Error(err)
 	}
 
+	mu.Lock()
 	cleanup = false
+	mu.Unlock()
 
 	if err := Wait(ctx); err != nil {
 		t.Error(err)
@@ -726,17 +736,22 @@ func TestWithTimeoutCause(t *testing.T) {
 	var errTest = errors.New("test error")
 	ctx, _ := WithTimeoutCause(context.Background(), 5*time.Millisecond, errTest)
 
+	mu := sync.Mutex{}
 	cleanup := false
 
 	if err := Cleanup(ctx, func() error {
 		time.Sleep(10 * time.Millisecond)
+		mu.Lock()
+		defer mu.Unlock()
 		cleanup = true
 		return nil
 	}); err != nil {
 		t.Error(err)
 	}
 
+	mu.Lock()
 	cleanup = false
+	mu.Unlock()
 
 	if err := Wait(ctx); err != nil {
 		t.Error(err)
