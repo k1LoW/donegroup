@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.10.2](https://github.com/k1LoW/donegroup/compare/v1.10.1...v1.10.2) - 2024-06-08
+### Other Changes
+- Use context.AfterFunc instead of go func() by @k1LoW in https://github.com/k1LoW/donegroup/pull/52
+
 ## [v1.10.1](https://github.com/k1LoW/donegroup/compare/v1.10.0...v1.10.1) - 2024-06-08
 ### Other Changes
 - Refactor withDoneGroup by @k1LoW in https://github.com/k1LoW/donegroup/pull/51
