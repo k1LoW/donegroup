@@ -28,6 +28,9 @@ jobs:
           fail_on_error: true
           golangci_lint_flags: --timeout=5m
 
+      - name: Check oldstable
+        uses: k1LoW/oldstable@v1
+
       - name: Run tests
         run: make ci
 
