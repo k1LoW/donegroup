@@ -1,5 +1,9 @@
 # Changelog
 
+## [v1.10.3](https://github.com/k1LoW/donegroup/compare/v1.10.2...v1.10.3) - 2025-09-01
+### Other Changes
+- chore(deps): bump actions/checkout from 4 to 5 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/55
+
 ## [v1.10.2](https://github.com/k1LoW/donegroup/compare/v1.10.1...v1.10.2) - 2024-06-08
 ### Other Changes
 - Use context.AfterFunc instead of go func() by @k1LoW in https://github.com/k1LoW/donegroup/pull/52
