@@ -1,19 +1,41 @@
+version: "2"
+run:
+  timeout: 2m
 linters:
-  fast: false
   enable:
-    - misspell
-    - gosec
+    - errorlint
     - godot
+    - gosec
+    - misspell
     - revive
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-  misspell:
-    locale: US
-    ignore-words: []
-  revive:
-    rules:
-      - name: unexported-return
-        disabled: true
-      - name: exported
-        disabled: false
+    - funcorder
+  settings:
+    errcheck:
+      check-type-assertions: true
+    misspell:
+      locale: US
+    revive:
+      rules:
+        - name: unexported-return
+          disabled: true
+        - name: exported
+          disabled: false
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - tmpmod
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

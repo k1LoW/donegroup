@@ -7,12 +7,21 @@ on:
 jobs:
   tagpr:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      packages: write
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Check out source code
-        uses: actions/checkout@v4
+        uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955 # v4.3.0
+
+      - name: Set up Go
+        uses: actions/setup-go@d35c59abb061a4a6fb18e82ac0862c26744d6ab5 # v5.5.0
+        with:
+          go-version-file: go.mod
 
       - id: run-tagpr
         name: Run tagpr
-        uses: Songmu/tagpr@v1
+        uses: Songmu/tagpr@ebb5da0cccdb47c533d4b520ebc0acd475b16614 # v1.7.0
