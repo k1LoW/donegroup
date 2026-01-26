@@ -1,5 +1,17 @@
 # Changelog
 
+## [v1.10.3](https://github.com/k1LoW/donegroup/compare/v1.10.2...v1.10.3) - 2026-01-26
+### Other Changes
+- chore(deps): bump actions/checkout from 4 to 5 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/55
+- chore(deps): bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/57
+- chore: setup tagpr labels by @k1LoW in https://github.com/k1LoW/donegroup/pull/59
+- chore(deps): bump Songmu/tagpr from 1.8.0 to 1.9.0 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/58
+- chore(deps): bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/60
+- chore(deps): bump the dependencies group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/62
+- chore(deps): bump Songmu/tagpr from 1.10.0 to 1.11.0 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/63
+- chore(deps): bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/64
+- chore(deps): bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/65
+
 ## [v1.10.2](https://github.com/k1LoW/donegroup/compare/v1.10.1...v1.10.2) - 2024-06-08
 ### Other Changes
 - Use context.AfterFunc instead of go func() by @k1LoW in https://github.com/k1LoW/donegroup/pull/52
