@@ -167,15 +167,17 @@ func WaitWithContextAndKey(ctx, ctxw context.Context, key any) error {
 		return ErrNotContainDoneGroup
 	}
 	<-ctx.Done()
+	dg.mu.Lock()
+	groups := make([]*sync.WaitGroup, len(dg.cleanupGroups))
+	copy(groups, dg.cleanupGroups)
+	dg.mu.Unlock()
 	wg := &sync.WaitGroup{}
-	for _, g := range dg.cleanupGroups {
+	for _, g := range groups {
 		wg.Add(1)
-		dg.mu.Lock()
 		go func() {
 			g.Wait()
 			wg.Done()
 		}()
-		dg.mu.Unlock()
 	}
 	ch := make(chan struct{})
 	go func() {
