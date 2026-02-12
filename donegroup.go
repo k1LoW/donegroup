@@ -215,13 +215,14 @@ func Awaiter(ctx context.Context) (completed func(), err error) {
 
 // AwaiterWithKey returns a function that guarantees execution of the process until it is called.
 // Note that if the timeout of WaitWithTimeout has passed (or the context of WaitWithContext has canceled), it will not wait.
-func AwaiterWithKey(ctx context.Context, key any) (completed func(), err error) {
-	ctxx, completed := context.WithCancel(context.WithoutCancel(ctx)) //nolint:govet
+func AwaiterWithKey(ctx context.Context, key any) (func(), error) {
+	ctxx, completed := context.WithCancel(context.WithoutCancel(ctx))
 	if err := CleanupWithKey(ctx, key, func() error {
 		<-ctxx.Done()
 		return nil
 	}); err != nil {
-		return nil, err //nolint:govet
+		completed()
+		return nil, err
 	}
 	return completed, nil
 }
@@ -283,7 +284,9 @@ func withDoneGroup(ctx context.Context, cancelCause context.CancelCauseFunc, key
 		return context.WithValue(ctx, key, dg)
 	}
 	// Add cleanupGroup to parent doneGroup
+	dg.mu.Lock()
 	dg.cleanupGroups = append(dg.cleanupGroups, wg)
+	dg.mu.Unlock()
 
 	// Leaf doneGroup
 	leafDg := &doneGroup{
