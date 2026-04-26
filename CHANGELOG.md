@@ -1,5 +1,14 @@
 # Changelog
 
+## [v1.10.4](https://github.com/k1LoW/donegroup/compare/v1.10.3...v1.10.4) - 2026-04-26
+### Other Changes
+- chore(deps): bump the dependencies group across 1 directory with 2 updates by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/70
+- chore(deps): bump reviewdog/action-golangci-lint from 2.8.0 to 2.10.0 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/72
+- chore(deps): bump the dependencies group with 2 updates by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/73
+- chore(deps): bump Songmu/tagpr from 1.18.1 to 1.18.2 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/74
+- chore(deps): bump Songmu/tagpr from 1.18.2 to 1.18.3 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/75
+- chore(deps): bump k1LoW/octocov-action from 1.5.0 to 1.5.1 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/76
+
 ## [v1.10.3](https://github.com/k1LoW/donegroup/compare/v1.10.2...v1.10.3) - 2026-02-12
 ### Other Changes
 - chore(deps): bump actions/checkout from 4 to 5 in the dependencies group by @dependabot[bot] in https://github.com/k1LoW/donegroup/pull/55
