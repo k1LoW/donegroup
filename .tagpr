@@ -34,5 +34,3 @@
 	releaseBranch = main
 	command = "make prerelease_for_tagpr"
 	versionFile = -
-	majorLabels = "tagpr:major"
-	minorLabels = "tagpr:minor"
